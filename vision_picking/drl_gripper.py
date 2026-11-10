@@ -154,7 +154,8 @@ class DrlGripper:
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             state = self._call(self.state, GetDrlState.Request())
-            if state.success and state.drl_state == 1:
+            # 1 = STOP, 3 = no program has run since the driver connected; both mean idle.
+            if state.success and state.drl_state in (1, 3):
                 time.sleep(0.3)
                 return
             time.sleep(0.2)

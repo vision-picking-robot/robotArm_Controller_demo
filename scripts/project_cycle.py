@@ -325,7 +325,12 @@ class OrchestratorRobot:
     def retract(self): self.c.retract()
     def place(self, box): self.c.place(box)
     def home(self): self.c.home()
-    def stop(self): self.c.stop()
+    def stop(self):
+        # Orchestrator calls stop() inside its except block; never let a failed stop hide the cause.
+        try:
+            self.c.stop()
+        except Exception as error:  # noqa: BLE001
+            self.c.log('move_stop_failed', message=str(error))
 
 
 def main(argv=None):
