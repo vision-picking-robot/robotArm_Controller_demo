@@ -193,6 +193,24 @@ python scripts/endurance_test.py --cycles 20                 # MOCK
 python scripts/endurance_test.py --mode real --confirm-real  # 실물, Ctrl+C까지 반복 (기본 10 deg/s)
 ```
 
+### 6-2. 교시 좌표 기반 전체 프로젝트 사이클 (카메라 없음)
+
+`scripts/project_cycle.py`는 RFID 시나리오 순서로 home → 라벨 스캔(z 50) → RFID 태그 → 그리퍼 열기 →
+상품 교시 위치 접근·하강(바닥+파지 높이) → 파지 → 들기 → 경유점 → 박스 슬롯 1 놓기 → 놓기 → 복귀를 실행한다.
+
+- **TCP 주의:** 현재 컨트롤러에 TCP가 비어 있으면 좌표가 플랜지 기준이다. 교시 posx는 손끝 기준이며
+  fkin(home.posj)과 비교하면 z가 120 mm 차이 난다. 스크립트는 시작 시 이 차이를 측정해 직선 이동 목표를
+  플랜지로 변환하고, 바닥 하한 검사는 손끝 z로 수행한다. 펜던트에서 TCP를 켜면 차이가 0이 되어 보정도 0이 된다.
+  `vision_picking/controller.py`의 기존 피킹 경로는 이 보정이 없으므로 **TCP를 켜지 않고 실물 실행하면 120 mm 낮게 내려간다.**
+- 시작 시 손끝이 home 높이보다 낮으면 수직으로 먼저 상승한 뒤 관절 이동한다.
+- **네트워크:** USB 랜 어댑터(r8152)를 USB 허브에 연결하면 `Tx status -71`로 리셋되어 DRFL 연결이 끊기고 SAFE_OFF가 된다.
+  노트북 포트에 직접 연결한다.
+
+```bash
+python scripts/project_cycle.py --cycles 1                                # MOCK
+python scripts/project_cycle.py --mode real --confirm-real --cycles 1     # 실물 1회
+```
+
 ### 7. 실측값 입력 후 실물 통합 API 실행 — 터미널 C
 
 ```bash

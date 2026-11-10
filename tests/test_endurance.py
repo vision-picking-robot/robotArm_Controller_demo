@@ -40,3 +40,16 @@ def test_drl_program_compiles_and_encodes_bytes():
         assert '_put(12, 42, 1)' in code and 'flange_serial_close()' in code
     with pytest.raises(ValueError):
         build_program(741, 1)
+
+
+def test_project_cycle_mock_applies_tcp_offset(tmp_path):
+    spec2 = importlib.util.spec_from_file_location('project_cycle', ROOT / 'scripts/project_cycle.py')
+    cycle = importlib.util.module_from_spec(spec2)
+    spec2.loader.exec_module(cycle)
+    log = tmp_path / 'pc.jsonl'
+    assert cycle.main(['--cycles', '1', '--log', str(log)]) == 0
+    records = [json.loads(line) for line in log.read_text().splitlines()]
+    assert next(r for r in records if r['event'] == 'tcp_offset')['applied_offset'] == 120.0
+    descend = next(r for r in records if r.get('name') == 'descend')
+    assert descend['tcp'][2] == 120.0
+    assert [r['event'] for r in records].count('cycle_ok') == 1
