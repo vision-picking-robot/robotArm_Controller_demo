@@ -1,5 +1,7 @@
 import asyncio
 import logging
+import os
+import sys
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -8,6 +10,11 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.requests import ClientDisconnect
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+from robot_rfid.api_server import install_rfid_routes
 
 from .config import Settings
 from .camera_views import DisplayMode
@@ -92,6 +99,9 @@ def create_app(settings=None, pipeline_factory=Pipeline, state_root=None):
     application.include_router(voice_router)
     application.include_router(picking_integration_router)
     install_robot_routes(application)
+    rfid_root = Path(state_root or settings.state_dir)
+    rfid_root.mkdir(parents=True, exist_ok=True)
+    install_rfid_routes(application, db_path=os.getenv("RFID_DB", str(rfid_root / "rfid.db")))
 
     @application.exception_handler(DomainError)
     async def domain_error(request, exc):

@@ -7,3 +7,4 @@ state/
 config/*.local.json
 config/imported.mock.json
 *.log
+*.db

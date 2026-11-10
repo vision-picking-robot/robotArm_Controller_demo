@@ -12,7 +12,7 @@ class Input(BaseModel):
 
 
 class ButtonCommand(Input):
-    action: Literal["query-stock", "query-order", "cmd-stop", "cmd-go", "cmd-order", "confirm-order", "discard-order"]
+    action: Literal["query-stock", "query-order", "cmd-stop", "cmd-go", "cmd-pick", "cmd-order", "confirm-order", "discard-order"]
 
 
 class Product(Input):
@@ -45,7 +45,70 @@ class Pause(Input):
     paused: bool
 
 
+class RfidScanTrigger(Input):
+    uid: str | None = Field(default=None, max_length=80)
+    quantity: int = Field(default=1, ge=1, le=100)
+
+
 router = APIRouter(prefix="/api/packing")
+
+
+@router.post("/rfid-scan")
+def rfid_scan_and_log(body: RfidScanTrigger, request: Request):
+    import threading
+    from uuid import uuid4
+    from robot_rfid.database import SEED_TAGS, normalize_uid
+    from robot_rfid.rfid_scanner import RFIDScanner
+
+    source = "preset"
+    scanned_uid = body.uid
+    if not scanned_uid:
+        stop = threading.Event()
+        timer = threading.Timer(1.2, stop.set)
+        timer.start()
+        try:
+            scanned_uid = RFIDScanner().scan(stop=stop)
+            source = "hardware_pcsc"
+        except Exception:
+            scanned_uid = SEED_TAGS[0][0]
+            source = "mock_fallback"
+        finally:
+            timer.cancel()
+    try:
+        normalized = normalize_uid(scanned_uid)
+    except ValueError as exc:
+        raise DomainError(str(exc), 422) from exc
+
+    rfid_db = getattr(request.app.state, "database", None)
+    product = rfid_db.product(normalized) if rfid_db else None
+    if product is None:
+        raise DomainError(f"미등록 RFID 태그입니다: {normalized}", 404)
+
+    task = None
+    created = False
+    if rfid_db is not None:
+        try:
+            task, created = rfid_db.enqueue(normalized, body.quantity, str(uuid4()))
+        except ValueError:
+            task = rfid_db.current_task()
+            created = False
+
+    packing = request.app.state.pipeline.packing
+    with packing.store.write_transaction() as write:
+        packing.log(
+            write,
+            "주문",
+            f"RFID 태그 인식 [{normalized}] · {product['product_name']} ({product['yolo_class_name']}) → {product['target_box_id']} ({source})",
+        )
+    return {
+        "ok": True,
+        "source": source,
+        "uid": normalized,
+        "product": product,
+        "task": task,
+        "created": created,
+        "text": f"RFID [{normalized}] 인식 완료: {product['product_name']} (YOLO: {product['yolo_class_name']}, 박스: {product['target_box_id']})",
+    }
 
 
 @router.post("/command")

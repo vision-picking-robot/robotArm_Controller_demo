@@ -108,3 +108,18 @@ class PackingTests(unittest.TestCase):
             self.assertEqual(c.put("/api/packing/orders/124").json()["state"], "received")
             self.assertEqual(c.put("/api/packing/orders/124").status_code, 200)
             self.assertEqual(len(c.get("/api/packing").json()["orders"]), 2)
+            # Verify manual button commands (including cmd-pick) and RFID scan endpoint
+            for action, expected in [
+                ("cmd-stop", "정지"),
+                ("cmd-go", "재개"),
+                ("cmd-pick", "집어(피킹)"),
+                ("query-stock", "주문 가능"),
+                ("query-order", "123번 주문"),
+            ]:
+                cmd_res = c.post("/api/packing/command", json={"action": action})
+                self.assertEqual(cmd_res.status_code, 200)
+                self.assertIn(expected, cmd_res.json()["text"])
+            rfid_res = c.post("/api/packing/rfid-scan", json={"uid": "0B71E55D", "quantity": 1})
+            self.assertEqual(rfid_res.status_code, 200)
+            self.assertEqual(rfid_res.json()["product"]["target_box_id"], "BOX-01")
+            self.assertIn("0B71E55D", rfid_res.json()["text"])

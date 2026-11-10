@@ -141,12 +141,39 @@ function renderDashboard() {
     return;
   }
   const progress = mainOrder().items.map(item => `<span class="${item.done ? "filled" : ""}"></span>`).join("");
+  const quickButtons = [
+    button("cmd-go", "▶ 시작 (재개)", "main-btn"),
+    button("cmd-stop", "⏸ 정지", "stop-btn"),
+    button("cmd-pick", "🦾 집어 (피킹)"),
+    button("query-stock", "📦 재고 조회"),
+    button("query-order", "📋 주문 조회"),
+    button("cmd-order", "🛒 예시 주문")
+  ].join("");
+  const rfidButtons = [
+    button("rfid-scan-auto", "📡 RFID 리더기 스캔", "main-btn"),
+    ...rfidPresetTags.map(([uid, label]) => button("rfid-tag-" + uid, `🏷️ ${label}`))
+  ].join("");
+  const statusBanner = (reply || lastRfidMessage)
+    ? `<p class="reply" role="status" style="margin-top:8px;padding:8px 10px;border-radius:6px;background:var(--mint-bg);color:var(--mint);font-weight:600;">${escapeHtml(lastRfidMessage || reply)}</p>`
+    : "";
   document.getElementById("dashboard-order").innerHTML = `
     <div><div class="row"><strong class="order-no">#123</strong>${badge(orderStatus(), mainOrder().paused ? "amber" : "")}</div>
       <p class="order-name">${escapeHtml(mainOrder().customer)} <span class="meta">· RFID ${escapeHtml(userForOrder(mainOrder())?.uid || "미할당")}</span></p></div>
     <div><div class="row"><span class="meta">포장 수량</span><span class="qty">${packed()} / ${mainOrder().items.length}</span></div>
       <div class="progress" aria-hidden="true">${progress}</div></div>
-    ${pickList()}${packingControls()}`;
+    ${pickList()}${packingControls()}
+    <hr style="border:0;border-top:1px solid var(--line);margin:10px 0;">
+    <div class="stack" style="gap:8px;">
+      <div>
+        <strong style="font-size:12px;color:var(--sub);display:block;margin-bottom:6px;">🎛️ 음성 대체 수동 버튼 제어 (마이크 없이 클릭 제어)</strong>
+        <div class="buttons" style="display:flex;flex-wrap:wrap;gap:6px;">${quickButtons}</div>
+      </div>
+      <div>
+        <strong style="font-size:12px;color:var(--sub);display:block;margin-bottom:6px;">🏷️ RFID 태그 인식 제어 (PC/SC 리더기 및 태그 프리셋)</strong>
+        <div class="buttons" style="display:flex;flex-wrap:wrap;gap:6px;">${rfidButtons}</div>
+      </div>
+      ${statusBanner}
+    </div>`;
   document.getElementById("dashboard-events").innerHTML = eventList(workEvents().slice(-3));
 }
 
@@ -277,12 +304,22 @@ function logs() {
 }
 
 const voiceCommands = {
+  "cmd-go": "피킹 시작해줘",
+  "cmd-stop": "멈춰",
+  "cmd-pick": "집어 (상품 피킹)",
   "query-stock": "재고 파악해줘",
   "query-order": "주문 내역 알려줘",
-  "cmd-stop": "멈춰",
-  "cmd-go": "피킹 시작해줘",
   "cmd-order": "빼빼로·생수·물티슈 하나씩 주문해줘"
 };
+
+const rfidPresetTags = [
+  ["0B71E55D", "빼빼로 (BOX-01)"],
+  ["0B71E75D", "생수/콜라 (BOX-02)"],
+  ["0B71E65D", "스팸 (BOX-03)"],
+  ["0B71ED5D", "물티슈 (BOX-04)"],
+  ["0B71EC5D", "인형 (BOX-05)"]
+];
+let lastRfidMessage = "";
 
 async function updateVoice(action = "status") {
   const serial = ++voiceSerial;
@@ -334,8 +371,22 @@ async function runCommand(action) {
   const label = voiceCommands[action] || (action === "confirm-order" ? "네, 주문해줘" : "취소");
   record("음성", "사용자", label);
   reply = answer.text;
+  lastRfidMessage = "";
   record("음성", "시스템", reply);
   confirmingOrder = answer.confirm;
+  announce(reply);
+  if (action === "cmd-pick") {
+    const selectBtn = document.querySelector('[data-pick="select"]:not(:disabled)');
+    if (selectBtn) selectBtn.click();
+  }
+}
+
+async function runRfidScan(uid = null) {
+  const result = await request("/rfid-scan", "POST", uid ? {uid, quantity: 1} : {quantity: 1});
+  lastRfidMessage = result.text;
+  reply = result.text;
+  record("주문", "RFID", result.text);
+  announce(result.text);
 }
 
 const pages = { orders, stock: inventory, people: users, "model-management": modelManagement, logs };
@@ -455,6 +506,10 @@ root.addEventListener("click", async event => {
     await perform(() => request("/orders/123/items/" + encodeURIComponent(id) + "/complete", "PUT"), true);
   } else if (Object.hasOwn(voiceCommands, action)) {
     await perform(() => runCommand(action), true);
+  } else if (action === "rfid-scan-auto") {
+    await perform(() => runRfidScan(null), true);
+  } else if (action.startsWith("rfid-tag-")) {
+    await perform(() => runRfidScan(action.slice(9)), true);
   } else if (Object.hasOwn(actions, action)) {
     await perform(actions[action], ["toggle", "new-order", "confirm-order", "unlink-rfid"].includes(action));
   } else {

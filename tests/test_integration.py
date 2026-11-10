@@ -123,3 +123,17 @@ def test_original_web_packet_roundtrip_to_controller(controller, payload):
                   source_size=dict(width=640, height=480), objects=[{key: payload['detection'][key] for key in ('class_id','label','confidence','xyxy')}])
     request = PickRequest(**payload_from_packet(packet, selection))
     assert controller.move_to_pick(request)['state'] == 'completed'
+
+
+def test_rfid_routes_and_button_commands_integrated(controller, tmp_path):
+    with TestClient(create_app(controller)) as client:
+        tags = client.get('/api/v1/tags')
+        assert tags.status_code == 200
+        assert len(tags.json()['tags']) == 5
+        tag = client.get('/api/v1/tags/0B71E55D')
+        assert tag.status_code == 200
+        assert tag.json()['yolo_class_name'] == 'snack_pepero'
+        scan = client.post('/api/v1/rfid/scan', json={'uid': '0B:71:E5:5D', 'quantity': 1})
+        assert scan.status_code == 200
+        assert scan.json()['uid'] == '0B71E55D'
+        assert scan.json()['product']['target_box_id'] == 'BOX-01'

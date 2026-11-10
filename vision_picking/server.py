@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from .contracts import PickRequest
 from .controller import Controller, ROOT
 from .store import DomainError
+from robot_rfid.api_server import install_rfid_routes
 
 
 def create_app(controller=None):
@@ -60,4 +61,5 @@ def create_app(controller=None):
     def status(identifier: str):
         return controller.status(identifier)
 
+    install_rfid_routes(app, db_path=os.getenv('RFID_DB', str(ROOT / 'state/rfid.db')))
     return app

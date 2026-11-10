@@ -142,6 +142,17 @@ Web Speech API의 `ko-KR` 전사를 기존 packing 처리기로 전달한다. Ch
 기존 단일 파지 위치 승인 UI는 새 제어기로 연결된다. 기존 17단계 시나리오의 순서는 유지하며
 그 실물 실행 경로까지 이 새 API로 대체했다고 간주하지 않는다.
 
+## 수동 버튼 제어·RFID 태그 인식·카메라 통합
+
+- **수동 버튼 제어 (음성 인식 대체 UI)**:
+  - 실습실에서 마이크나 Web Speech API를 사용할 수 없는 경우, 메인 대시보드 우측 **[현재 주문 · 수동 버튼 및 RFID 제어]** 패널과 음성 패널 내 **버튼으로 실행** 영역에서 모든 명령(`▶ 시작 (재개)`, `⏸ 정지`, `🦾 집어 (피킹)`, `📦 재고 조회`, `📋 주문 조회`, `🛒 예시 주문`)을 클릭 한 번으로 동일하게 실행할 수 있다.
+- **RFID 태그 인식 및 작업 큐 (`robot_rfid/`)**:
+  - `https://github.com/vision-picking-robot/rfid-pick-and-place`의 PC/SC 리더기(`ACR1555`/`ACR1552`) 스캐너, 절전 해제 도구(`robot_rfid/rfid_power.py`), SQLite 작업 큐(`robot_rfid/database.py`), 오케스트레이터(`robot_rfid/orchestrator.py`), API 엔드포인트(`/api/v1/tags/{uid}`, `/api/v1/scan-event`, `/api/v1/rfid/scan`, `/api/v1/current-task`, `/api/v1/tasks/{task_id}`)가 `8000` 웹 서버와 `8011` 제어기 서버 양쪽에 통합되어 있다.
+  - 등록된 5종 상품 태그: `0B71E55D` (빼빼로/BOX-01), `0B71E75D` (생수·콜라/BOX-02), `0B71E65D` (스팸/BOX-03), `0B71ED5D` (물티슈/BOX-04), `0B71EC5D` (인형/BOX-05).
+- **카메라 영상 및 RealSense 3D 깊이/높이 측정 (`web/app/`, `camera_depth/`)**:
+  - 웹 대시보드(`web/app/capture.py`, `web/app/realsense.py`, `web/app/pick_plane.py`)에 OpenCV(Linux V4L2 / Windows DirectShow / macOS AVFoundation) 실시간 카메라 스트리밍, Intel RealSense 깊이·적외선·RGBD·3D 포인트 클라우드 뷰, 4점 평면 호모그래피(`PickPlane`) 좌표 변환이 포함되어 있다.
+  - 추가적으로 `camera_depth/` 폴더에 RealSense D455f 기반 실시간 3D 높이·거리 측정기(`camera_depth/realsense_measure_height.py`, `camera_depth/run_measure_height.bat`) 및 전용 뷰어(`camera_depth/realsense_viewer.py`, `camera_depth/run_viewer.bat`)가 함께 포함되어 있다.
+
 ## 문서·검증
 
 - [OS/ROS 확정: Ubuntu 24.04 / ROS 2 Jazzy](docs/01-environment-report.md)
