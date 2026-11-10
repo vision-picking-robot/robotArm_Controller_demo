@@ -183,7 +183,10 @@ ros2 param set   /dsr01/warehouse_gripper enable_motion false
 교시된 `home`↔`via_point` 관절 자세 왕복과 그리퍼 열기→닫기→열기를 반복한다.
 모든 이동은 SafeMover(fkin 바닥 검사·속도 상한)를 거치고, 매 사이클 REAL/AUTO/STANDBY를 재확인하며,
 도착 관절 오차(1°)를 검사한다. 오류나 `Ctrl+C`이면 `move_stop`을 보내고 종료하며 자동 재시도하지 않는다.
-로그는 `state/endurance/*.jsonl`에 남는다. **비상정지가 아니므로 펜던트 E-Stop을 손 닿는 곳에 둔다.**
+로그는 `state/endurance/*.jsonl`에 남는다.
+실물 그리퍼는 PC 플러그인이 아니라 **컨트롤러 DRL**(`vision_picking/drl_gripper.py`, `drl_start`)로 구동한다.
+컨트롤러 DRCF v2.10(GF02100300)이 PC DRFL(GL013304)의 포트 지정 `flange_serial_*` 호출에 응답하지 않기 때문이다.
+단독 확인: `python -m vision_picking.drl_gripper --action status|open|close` **비상정지가 아니므로 펜던트 E-Stop을 손 닿는 곳에 둔다.**
 
 ```bash
 python scripts/endurance_test.py --cycles 20                 # MOCK

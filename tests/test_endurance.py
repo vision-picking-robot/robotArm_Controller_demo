@@ -30,3 +30,13 @@ def test_speed_over_limit_stops_without_motion(tmp_path):
     records = [json.loads(line) for line in log.read_text().splitlines()]
     assert not any(r['event'] == 'arm_arrived' for r in records)
     assert any(r['event'] == 'error' for r in records)
+
+
+def test_drl_program_compiles_and_encodes_bytes():
+    from vision_picking.drl_gripper import build_program
+    for target in (-1, 0, 740):
+        code = build_program(target, 42)
+        compile(code, 'drl', 'exec')
+        assert '_put(12, 42, 1)' in code and 'flange_serial_close()' in code
+    with pytest.raises(ValueError):
+        build_program(741, 1)

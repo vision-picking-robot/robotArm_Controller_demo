@@ -27,7 +27,6 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from vision_picking.legacy.gripper_feedback import parse_feedback, wait_for_feedback  # noqa: E402
 from vision_picking.legacy.safe_move import SafeMover  # noqa: E402
 
 JOINT_TOLERANCE_DEG = 1.0
@@ -59,13 +58,11 @@ class MockArm:
         self.posj = list(pos)
         return 0
 
-    def gripper(self, action, timeout=8):
-        self.events.append(dict(action='gripper_' + action))
-        if action == 'open':
-            self.position = 0
-        elif action == 'close':
-            self.position = 740
-        return f'position_pulses={self.position} current=0 moving=0 moving_status=0'
+    def grip(self, target):
+        self.events.append(dict(action='grip', target=target))
+        if target >= 0:
+            self.position = target
+        return dict(code=1, result='ok', voltage=24.1, position_pulses=self.position, current=0, moving=0)
 
     def stop(self):
         self.events.append(dict(action='stop'))
@@ -75,12 +72,14 @@ class MockArm:
 
 
 class RealArm:
-    """Thin adapter over the existing RosBackend (+ its RosMotionBackend)."""
+    """RosBackend for arm motion; the gripper runs as controller-side DRL (see drl_gripper.py)."""
     mock = False
 
     def __init__(self, namespace):
         from vision_picking.backends import RosBackend
+        from vision_picking.drl_gripper import DrlGripper
         self.ros = RosBackend(namespace)
+        self.hand = DrlGripper(self.ros.node, self.ros.executor, namespace)
 
     def check_ready(self):
         self.ros.check_ready()
@@ -94,8 +93,8 @@ class RealArm:
     def movej(self, pos, vel, acc, mod, radius):
         return self.ros.motion.movej(pos, vel, acc, mod, radius)
 
-    def gripper(self, action, timeout=8):
-        return self.ros.gripper(action, timeout)
+    def grip(self, target):
+        return self.hand.run(target)
 
     def stop(self):
         self.ros.stop()
@@ -147,18 +146,22 @@ def move_and_verify(mover, arm, name, target, vel, acc, log):
     log('arm_arrived', pose=name, seconds=round(time.monotonic() - t0, 2), max_joint_error=round(err, 3))
 
 
+def grip_checked(arm, target, description, ok):
+    feedback = arm.grip(target)
+    if feedback['code'] != 1:
+        raise RuntimeError(f"Gripper {description} failed: {feedback['result']}")
+    if feedback['moving'] or not ok(feedback['position_pulses']):
+        raise RuntimeError(f"Gripper {description} not confirmed: position={feedback['position_pulses']}")
+    return feedback
+
+
 def gripper_cycle(arm, log):
-    status = lambda remaining: arm.gripper('status', max(remaining, 1.0))  # noqa: E731
     t0 = time.monotonic()
-    arm.gripper('open')
-    wait_for_feedback(status, lambda p, c: abs(p) <= OPEN_MAX_PULSES, 'open', timeout=6.0)
-    arm.gripper('close')
-    wait_for_feedback(status, lambda p, c: p >= CLOSED_MIN_PULSES, 'close (empty)', timeout=6.0)
-    _, closed_pos, closed_cur = parse_feedback(arm.gripper('status'))
-    arm.gripper('open')
-    wait_for_feedback(status, lambda p, c: abs(p) <= OPEN_MAX_PULSES, 'reopen', timeout=6.0)
-    log('gripper_cycled', seconds=round(time.monotonic() - t0, 2),
-        closed_position=closed_pos, closed_current=closed_cur)
+    grip_checked(arm, 0, 'open', lambda p: p <= OPEN_MAX_PULSES)
+    closed = grip_checked(arm, 740, 'close (empty)', lambda p: p >= CLOSED_MIN_PULSES)
+    opened = grip_checked(arm, 0, 'reopen', lambda p: p <= OPEN_MAX_PULSES)
+    log('gripper_cycled', seconds=round(time.monotonic() - t0, 2), voltage=opened['voltage'],
+        closed_position=closed['position_pulses'], closed_current=closed['current'])
 
 
 def main(argv=None):
