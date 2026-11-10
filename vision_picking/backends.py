@@ -58,7 +58,7 @@ class RosBackend:
                 raise MotionError('Requires real robot, AUTO mode and STANDBY state')
     def movel(self, *args, **kwargs):
         return self.motion.movel(*args, **kwargs)
-    def gripper(self, action, timeout=4):
+    def gripper(self, action, timeout=8):
         from .legacy.ros_calls import call_service
         result = call_service(self.executor, self.hand[action], self.trigger.Request(), timeout)
         if not result.success: raise MotionError(result.message)

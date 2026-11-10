@@ -178,6 +178,18 @@ ros2 param set   /dsr01/warehouse_gripper enable_motion false
 `grasp_verified:false`와 실제 위치·전류를 구분해 확인한다. 오류·타임아웃이면 반복 명령 대신
 현물과 상태부터 확인한다. enable_motion=false는 토크 해제나 긴급 정지를 뜻하지 않는다.
 
+### 6-1. 팔·그리퍼 무한 내구 시험 (선택) — 터미널 C
+
+교시된 `home`↔`via_point` 관절 자세 왕복과 그리퍼 열기→닫기→열기를 반복한다.
+모든 이동은 SafeMover(fkin 바닥 검사·속도 상한)를 거치고, 매 사이클 REAL/AUTO/STANDBY를 재확인하며,
+도착 관절 오차(1°)를 검사한다. 오류나 `Ctrl+C`이면 `move_stop`을 보내고 종료하며 자동 재시도하지 않는다.
+로그는 `state/endurance/*.jsonl`에 남는다. **비상정지가 아니므로 펜던트 E-Stop을 손 닿는 곳에 둔다.**
+
+```bash
+python scripts/endurance_test.py --cycles 20                 # MOCK
+python scripts/endurance_test.py --mode real --confirm-real  # 실물, Ctrl+C까지 반복 (기본 10 deg/s)
+```
+
 ### 7. 실측값 입력 후 실물 통합 API 실행 — 터미널 C
 
 ```bash
