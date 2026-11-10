@@ -3,3 +3,4 @@
     type: warehouse_gripper/GripperController
     flange_port: 1
     enable_motion: false
+    tool_voltage: 24

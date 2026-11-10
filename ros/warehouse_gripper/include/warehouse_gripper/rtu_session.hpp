@@ -43,7 +43,9 @@ public:
       if (remaining <= 0) {
         break;
       }
-      const auto chunk = port_.read(std::min(0.05f, remaining));
+      // Pass the whole remaining window like the working DART/SDK code
+      // (flange_serial_read(1.0)); 50 ms slices returned no bytes on the E0509 flange.
+      const auto chunk = port_.read(std::min(1.0f, remaining));
       if (chunk.empty()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         continue;

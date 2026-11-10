@@ -147,3 +147,20 @@ CRC·오류 응답 거부, 정지·이동 상태 바이트 분리, 구형·신�
 성공을 대신하지 않습니다.
 
 레지스터 기준: [ROBOTIS RH-P12-RN(A) 공식 매뉴얼](https://emanual.robotis.com/docs/en/platform/rh_p12_rna/).
+
+## 무응답 진단 (`probe`, `tool_voltage`)
+
+`config/gripper.yaml`의 `tool_voltage: 24`는 첫 그리퍼 서비스 호출 전에 DRFL
+`set_tool_digital_output_level(24)`로 플랜지 출력 전압을 설정한다(0이면 펜던트 설정을 유지).
+수신은 DART/SDK 코드와 같이 `flange_serial_read`에 남은 시간 전체(최대 1초)를 넘긴다.
+
+`received_bytes=0` 타임아웃이면 읽기 전용 진단을 실행한다. 포트 1·2와 57600/115200/1M/9600/19200/38400
+조합에 전압 레지스터(40297) 읽기만 보내고 수신 원시 바이트를 표시한다. 쓰기 명령은 보내지 않는다.
+
+```bash
+ros2 service call /dsr01/warehouse_gripper/probe std_srvs/srv/Trigger '{}'
+```
+
+모든 조합이 `bytes=0`이고 그리퍼 LED가 꺼져 있으면 소프트웨어가 아니라 전원·배선 문제다.
+플랜지–그리퍼 케이블 체결, 펜던트의 툴 플랜지 전원(24 V) 설정, DART 작업의 시리얼 점유를 확인한다.
+(2026-11-10 실물: LED 꺼짐, 12개 조합 모두 0바이트 → 전원 미공급으로 판정)

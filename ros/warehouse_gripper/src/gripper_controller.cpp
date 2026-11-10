@@ -6,7 +6,9 @@
 #include "warehouse_gripper/modbus.hpp"
 #include "warehouse_gripper/rtu_session.hpp"
 
+#include <algorithm>
 #include <chrono>
+#include <cstdio>
 #include <cstdint>
 #include <mutex>
 #include <stdexcept>
@@ -27,10 +29,10 @@ constexpr uint16_t feedback_register = 285;
 class FlangePort
 {
 public:
-  FlangePort(DRAFramework::CDRFLEx & robot, int port) : robot_(robot), port_(port)
+  FlangePort(DRAFramework::CDRFLEx & robot, int port, int baud = 57600) : robot_(robot), port_(port)
   {
     if (!flange::open(
-        robot_, port_, 57600, BYTE_SIZE_EIGHTBITS, PARITY_CHECK_NONE, STOPBITS_ONE, 0))
+        robot_, port_, baud, BYTE_SIZE_EIGHTBITS, PARITY_CHECK_NONE, STOPBITS_ONE, 0))
     {
       throw std::runtime_error("Could not open flange serial port " + std::to_string(port_) +
         "; stop the DART task/other serial clients and check the installed DRFL version");
@@ -91,6 +93,8 @@ public:
   {
     auto_declare<int>("flange_port", 1);
     auto_declare<bool>("enable_motion", false);
+    // Flange power for the RH-P12-RN(A): 0 leaves the pendant setting untouched, 12 or 24 sets it.
+    auto_declare<int>("tool_voltage", 0);
     return controller_interface::CallbackReturn::SUCCESS;
   }
 
@@ -112,12 +116,28 @@ public:
       return controller_interface::CallbackReturn::ERROR;
     }
     port_ = static_cast<int>(port);
+    tool_voltage_ = static_cast<int>(get_node()->get_parameter("tool_voltage").as_int());
+    if (tool_voltage_ != 0 && tool_voltage_ != 12 && tool_voltage_ != 24) {
+      RCLCPP_ERROR(get_node()->get_logger(), "tool_voltage must be 0, 12 or 24");
+      return controller_interface::CallbackReturn::ERROR;
+    }
+    voltage_applied_ = false;
     status_ = make_service("status", -1);
+    probe_ = get_node()->create_service<Trigger>("~/probe",
+      [this](const Trigger::Request::SharedPtr, Trigger::Response::SharedPtr response) {
+        std::unique_lock<std::mutex> lock(mutex_, std::try_to_lock);
+        if (!lock || !active_) {
+          response->message = "Gripper controller is inactive or busy";
+          return;
+        }
+        response->message = probe();
+        response->success = response->message.find("bytes=7") != std::string::npos;
+      });
     open_ = make_service("open", 0);
     close_ = make_service("close", 740);
     RCLCPP_INFO(get_node()->get_logger(),
       "DART-compatible RH-P12-RN(A): port=%d, 57600 8N1, ID=1, 400mA, open=0, close=740; "
-      "enable_motion defaults to false", port_);
+      "enable_motion defaults to false; rx=full-window; tool_voltage=%d", port_, tool_voltage_);
     return controller_interface::CallbackReturn::SUCCESS;
   }
 
@@ -173,6 +193,16 @@ private:
               "be AUTO/STANDBY. Stop the DART task before ROS control");
           }
 
+          if (tool_voltage_ != 0 && !voltage_applied_) {
+            if (!robot->set_tool_digital_output_level(tool_voltage_)) {
+              throw std::runtime_error("Could not set flange tool voltage to " +
+                std::to_string(tool_voltage_) + " V");
+            }
+            voltage_applied_ = true;
+            RCLCPP_INFO(get_node()->get_logger(), "Flange tool voltage set to %d V", tool_voltage_);
+            // Give the gripper time to boot after power-up before the first Modbus frame.
+            std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+          }
           FlangePort port(*robot, port_);
           RtuSession<FlangePort> serial(port);
           if (target < 0) {
@@ -194,7 +224,55 @@ private:
   std::mutex mutex_;
   bool active_ = false;
   int port_ = 1;
-  rclcpp::Service<Trigger>::SharedPtr status_, open_, close_;
+  int tool_voltage_ = 0;
+  bool voltage_applied_ = false;
+  // Read-only diagnostic: voltage register request on each port/baud, raw bytes reported.
+  std::string probe()
+  {
+    auto robot = static_cast<DRAFramework::CDRFLEx *>(get_drfl(nullptr));
+    if (!robot || robot->get_robot_system() != ROBOT_SYSTEM_REAL) {
+      return "An active real Doosan connection is required";
+    }
+    if (tool_voltage_ != 0) {
+      robot->set_tool_digital_output_level(tool_voltage_);
+      std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+    }
+    std::string out;
+    const auto request = with_crc(read_registers(slave_id, 296, 1));
+    for (int port : {1, 2}) {
+      for (int baud : {57600, 115200, 1000000, 9600, 19200, 38400}) {
+        out += "port=" + std::to_string(port) + " baud=" + std::to_string(baud) + " ";
+        try {
+          FlangePort serial(*robot, port, baud);
+          for (int i = 0; i < 5 && !serial.read(0.02f).empty(); ++i) {}
+          serial.write(request);
+          Frame reply;
+          const auto end = std::chrono::steady_clock::now() + std::chrono::seconds(1);
+          while (reply.size() < 7 && std::chrono::steady_clock::now() < end) {
+            const float left = std::chrono::duration<float>(end - std::chrono::steady_clock::now()).count();
+            auto chunk = serial.read(std::max(0.01f, std::min(1.0f, left)));
+            if (chunk.empty()) {
+              std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+            reply.insert(reply.end(), chunk.begin(), chunk.end());
+          }
+          char hex[4];
+          out += "bytes=" + std::to_string(reply.size()) + " [";
+          for (auto b : reply) {
+            std::snprintf(hex, sizeof(hex), "%02x ", b);
+            out += hex;
+          }
+          out += "]";
+        } catch (const std::exception & error) {
+          out += std::string("error=") + error.what();
+        }
+        out += "; ";
+      }
+    }
+    return out;
+  }
+
+  rclcpp::Service<Trigger>::SharedPtr status_, open_, close_, probe_;
 };
 }  // namespace warehouse_gripper
 
