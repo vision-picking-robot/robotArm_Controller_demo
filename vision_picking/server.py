@@ -44,8 +44,9 @@ def create_app(controller=None):
 
     @app.get('/api/v1/context')
     def context():
-        return dict(camera=controller.config['calibration']['camera'],
-                    calibration_revision=controller.config['calibration']['revision'], mock_mode=controller.mock_mode)
+        calibration = controller.config.get('calibration') or {}
+        return dict(camera=calibration.get('camera'),
+                    calibration_revision=calibration.get('revision'), mock_mode=controller.mock_mode)
 
     @app.post('/api/v1/pick')
     def pick(body: PickRequest):

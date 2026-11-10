@@ -1,0 +1,14 @@
+{
+  "python": "3.12.16",
+  "controller_tests": 18,
+  "javascript_tests": 50,
+  "gripper_mock_actions": [
+    "status",
+    "open",
+    "close"
+  ],
+  "self_contained_web_startup": true,
+  "http_api_port": 8011,
+  "drfl_robot_port": 12345,
+  "hardware_tested": false
+}
