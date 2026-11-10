@@ -10,4 +10,4 @@ config/imported.mock.json
 *.db
 build/
 dist/
-validation/
+/validation/

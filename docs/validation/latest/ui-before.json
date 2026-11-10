@@ -1,0 +1,50 @@
+{
+  "1440": {
+    "errors": [],
+    "boxes": {
+      "#live-camera": {
+        "x": 215.671875,
+        "y": 141.25,
+        "width": 703.984375,
+        "height": 791.75
+      },
+      "#dashboard-order": {
+        "x": 933.65625,
+        "y": 193.25,
+        "width": 473.671875,
+        "height": 738.75
+      },
+      "#dashboard-events": {
+        "x": 216.671875,
+        "y": 999,
+        "width": 1190.65625,
+        "height": 55
+      }
+    },
+    "buttons": 14
+  },
+  "390": {
+    "errors": [],
+    "boxes": {
+      "#live-camera": {
+        "x": 12,
+        "y": 363.8125,
+        "width": 366,
+        "height": 667.6875
+      },
+      "#dashboard-order": {
+        "x": 13,
+        "y": 1091.5,
+        "width": 364,
+        "height": 620.375
+      },
+      "#dashboard-events": {
+        "x": 13,
+        "y": 1776.875,
+        "width": 364,
+        "height": 57
+      }
+    },
+    "buttons": 14
+  }
+}
