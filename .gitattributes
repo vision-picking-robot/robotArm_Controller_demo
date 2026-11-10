@@ -1,3 +1,6 @@
 # Preserve the exact upstream patch payload, including context-line whitespace.
 web/rosbridge/*.patch -whitespace
 web/rosbridge/host-sdk/*.patch -whitespace
+
+# Windows batch files must keep CRLF line endings
+windows_rfid_bridge/*.bat text eol=crlf

@@ -11,3 +11,5 @@ config/imported.mock.json
 build/
 dist/
 /validation/
+windows_rfid_bridge/api_url.txt
+.venv-win/

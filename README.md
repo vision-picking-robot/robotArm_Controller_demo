@@ -220,7 +220,7 @@ python scripts/project_cycle.py --mode real --confirm-real --cycles 1     # 실�
 그리퍼 열기 → 접근·하강(z 120) → 파지(빈 닫힘 738) → 들기 → 경유점 → 박스 슬롯 1(z 85) 놓기 → 열기 → 복귀,
 웹 작업 `COMPLETED`. 상품을 놓지 않은 빈 파지 시험이며 RFID 리더 미연결로 프리셋 태그를 사용했다.
 
-**원격 RFID (리더기는 다른 Windows PC, 블루투스):** 리눅스에는 ACR1555U 블루투스 PC/SC 드라이버가 없다(USB만 지원).
+**원격 RFID (리더기는 다른 Windows PC, 블루투스):** Windows 쪽은 [windows_rfid_bridge/README.md](windows_rfid_bridge/README.md)대로 클론 후 배치 파일만 실행한다. 리눅스에는 ACR1555U 블루투스 PC/SC 드라이버가 없다(USB만 지원).
 Windows PC에서 `python -m robot_rfid.rfid_scanner --api http://<우분투IP>:8000`으로 UID를 보내면 웹이 DB와 매칭해 작업을 등록하고,
 우분투는 `python scripts/start_lab.py --host 0.0.0.0`(같은 LAN에 대시보드 공개, 인증 없음 — 신뢰할 수 있는 망에서만) 후
 `python scripts/project_cycle.py --mode real --confirm-real --cycles 0 --api http://127.0.0.1:8000 --remote-rfid`로 작업을 기다려 실행한다.
