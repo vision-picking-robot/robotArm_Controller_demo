@@ -375,6 +375,54 @@ class OrchestratorRobot:
             self.c.log('move_stop_failed', message=str(error))
 
 
+def run_remote_task(runner, args, log, cycle):
+    """Execute the next task another PC queued through POST /api/v1/scan-event (UID -> DB match on the web)."""
+    import httpx
+    api = httpx.Client(base_url=args.api, timeout=10)
+    runner.raw.check_ready()
+    runner.home()
+    log('waiting_for_tag', api=args.api, note='scan a tag on the remote reader PC')
+    started = time.monotonic()
+    while True:
+        task = api.get('/api/v1/current-task').raise_for_status().json()['task']
+        if task is not None:
+            break
+        if args.wait_timeout and time.monotonic() - started > args.wait_timeout:
+            raise TimeoutError(f'No remote RFID task within {args.wait_timeout:.0f}s')
+        time.sleep(0.5)
+    if task['status'] == 'PICKING':
+        raise RuntimeError('Interrupted PICKING task requires operator reconciliation')
+    tid, completed = task['task_id'], task['completed']
+    log('task', task_id=tid, uid=task.get('tag_uid'), product=task.get('yolo_class_name'),
+        name=task.get('product_name'), box=task.get('target_box_id'), quantity=task['quantity'])
+    patch = lambda done, status, error=None: api.patch(  # noqa: E731
+        f'/api/v1/tasks/{tid}', json=dict(completed=done, status=status, error=error)).raise_for_status()
+    try:
+        patch(completed, 'PICKING')
+        while completed < task['quantity']:
+            target = runner.detect(task)
+            runner.approach(target)
+            runner.grip_object()
+            runner.retract()
+            runner.place(task.get('target_box_id'))
+            completed += 1
+            patch(completed, 'PICKING')
+        patch(completed, 'COMPLETED')
+        runner.home()
+        log('cycle_ok', cycle=cycle, scenario='remote_rfid', task_id=tid, product=target['product'],
+            box_slot=runner.last_slot, holding=runner.holding)
+    except Exception as error:
+        try:
+            runner.stop()
+        except Exception as stop_error:  # noqa: BLE001
+            log('move_stop_failed', message=str(stop_error))
+        try:
+            patch(completed, 'DEFECTIVE', str(error))
+        except Exception:  # noqa: BLE001
+            log('task_report_failed', task_id=tid)
+        raise
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--mode', choices=['mock', 'real'], default='mock')
@@ -392,10 +440,15 @@ def main(argv=None):
     parser.add_argument('--place-extra', type=float, default=100.0,
                         help='mm above the taught box slot z where the object is released')
     parser.add_argument('--require-object', action='store_true', help='fail when the gripper closes empty')
+    parser.add_argument('--remote-rfid', action='store_true',
+                        help='with --api: wait for tasks queued by another PC (POST /api/v1/scan-event) instead of scanning')
+    parser.add_argument('--wait-timeout', type=float, default=0, help='remote mode: seconds to wait per task, 0 = forever')
     parser.add_argument('--api', help='run the repo RFID Orchestrator against this web API, e.g. http://127.0.0.1:8000')
     args = parser.parse_args(argv)
     if args.mode == 'real' and not args.confirm_real:
         parser.error('--mode real requires --confirm-real')
+    if args.remote_rfid and not args.api:
+        parser.error('--remote-rfid requires --api')
     poses, products = load_config(args.product)
     log = Logger(args.log or ROOT / 'state' / 'project_cycle' / f'{args.mode}-{datetime.now():%Y%m%d-%H%M%S}.jsonl')
     taught = [*poses['poses'].values(), poses['box_slots'][1]]
@@ -412,7 +465,9 @@ def main(argv=None):
         runner = Cycle(raw, poses, products, args, log)
         while args.cycles == 0 or cycle < args.cycles:
             cycle += 1
-            if args.api:
+            if args.api and args.remote_rfid:
+                run_remote_task(runner, args, log, cycle)
+            elif args.api:
                 import logging
                 from robot_rfid.orchestrator import APIClient, Orchestrator
                 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(name)s %(message)s')

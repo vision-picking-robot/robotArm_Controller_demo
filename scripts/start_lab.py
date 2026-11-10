@@ -9,13 +9,18 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description='MOCK lab launcher')
+    parser.add_argument('--host', default='127.0.0.1',
+                        help='dashboard bind address; 0.0.0.0 lets a reader PC on the same LAN post scan events')
+    args = parser.parse_args()
     env = dict(os.environ, MOCK_MODE='true', YOLO_BACKEND='mock', YOLO_CAMERA_AUTOSTART='0',
                YOLO_VOICE_ENABLED='1', YOLO_DEMO_CONTROLLER_URL='http://127.0.0.1:8011', ROBOT_ROS_PC_IP='',
                RFID_DB=os.environ.get('RFID_DB', str(ROOT / 'state/rfid.db')))
     children = []
     commands = [
         [sys.executable, '-m', 'uvicorn', 'vision_picking.server:create_app', '--factory', '--host', '127.0.0.1', '--port', '8011', '--workers', '1'],
-        [sys.executable, '-m', 'uvicorn', 'app.main:app', '--app-dir', 'web', '--host', '127.0.0.1', '--port', '8000'],
+        [sys.executable, '-m', 'uvicorn', 'app.main:app', '--app-dir', 'web', '--host', args.host, '--port', '8000'],
     ]
     try:
         for command in commands:

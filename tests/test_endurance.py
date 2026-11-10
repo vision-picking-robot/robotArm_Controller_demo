@@ -56,3 +56,11 @@ def test_project_cycle_mock_applies_tcp_offset(tmp_path):
     assert steps['lift']['tcp'][2] == 370.0 and steps['home_carry']['tcp'][2] == 385.0
     assert steps['box_place']['tcp'][2] == 185.0 and steps['box_retreat']['tcp'][2] == 385.0
     assert [r['event'] for r in records].count('cycle_ok') == 1
+
+
+def test_remote_rfid_requires_api():
+    spec2 = importlib.util.spec_from_file_location('project_cycle_r', ROOT / 'scripts/project_cycle.py')
+    cycle = importlib.util.module_from_spec(spec2)
+    spec2.loader.exec_module(cycle)
+    with pytest.raises(SystemExit):
+        cycle.main(['--remote-rfid'])
