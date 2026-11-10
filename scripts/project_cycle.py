@@ -223,55 +223,109 @@ class Cycle:
         self.log('step', name=name, kind='gripper', position=fb['position_pulses'], current=fb['current'])
         return fb
 
-    def run(self, cycle):
-        P, motion = self.poses['poses'], self.poses['motion']
-        up = motion['approach_offset_z']
+    # ---- Steps matching robot_rfid.orchestrator.Orchestrator's robot interface ----
+    def pre_scan(self):
+        P = self.poses['poses']
         self.raw.check_ready()
-        # 0. Recovery: if an earlier stop left the tool low, rise straight up before any joint move.
+        # Recovery: if an earlier stop left the tool low, rise straight up before any joint move.
         cur = FlangeOffset(self.raw, self.offset).get_current_posx(DR_BASE)
         safe_z = P['home']['posx'][2]
         if cur is not None and cur[2] < safe_z - POS_TOL:
             self.log('recovery', tcp=[round(v, 1) for v in cur[:3]], rise_to=safe_z)
             self.l('recovery_rise', [cur[0], cur[1], safe_z, *cur[3:6]], self.args.dvel)
-        # 1. Home and pre-scan at the label reader
         self.j('home', P['home']['posj'])
         self.j('label_scan_approach', P['label_scan_approach']['posj'])
         scan_hi = P['label_scan_approach']['posx']
         self.l('label_scan', [*scan_hi[:2], P['label_scan']['posx'][2], *scan_hi[3:]], self.args.dvel)
+
+    def scan(self):
+        P = self.poses['poses']
         uid = self.raw.scan() or self.args.tag
-        product, slot = TAGS.get(uid, (self.args.product, 1))
+        self.log('rfid', uid=uid, reader='real' if uid != self.args.tag else 'preset')
+        self.l('label_scan_retract', P['label_scan_approach']['posx'])
+        self.j('home_after_scan', P['home']['posj'])
+        return uid
+
+    def detect(self, task):
+        product = task.get('yolo_class_name') if isinstance(task, dict) else task
         if product not in self.products or not self.products[product]['real'].get('taught'):
+            self.log('vision_fallback', requested=product, used=self.args.product)
             product = self.args.product
-        if not self.poses['box_slots'].get(slot, {}).get('taught'):
-            slot = 1
-        self.log('rfid', uid=uid, product=product, box_slot=slot, reader='real' if uid != self.args.tag else 'preset')
-        self.l('label_scan_retract', scan_hi)
-        # 2. Pick at the taught product position
-        self.j('home_before_pick', P['home']['posj'])
         item = self.products[product]['real']
         grasp_z = self.poses['floor']['floor_z'] + item['grasp_height_from_floor']
-        grasp = [item['x'], item['y'], grasp_z, 0.0, 180.0, item.get('rz', 0.0)]
-        above = [*grasp[:2], grasp_z + up, *grasp[3:]]
+        self.log('vision', source='taught product pose (no camera)', product=product)
+        return dict(product=product, pose=[item['x'], item['y'], grasp_z, 0.0, 180.0, item.get('rz', 0.0)])
+
+    def approach(self, target):
+        up = self.poses['motion']['approach_offset_z']
+        grasp = target['pose']
+        self._above = [*grasp[:2], grasp[2] + up, *grasp[3:]]
+        self._product = target['product']
         self.grip('gripper_open', 0, lambda p: p <= OPEN_MAX)
-        self.l('approach', above)
+        self.l('approach', self._above)
         self.l('descend', grasp, self.args.dvel)
+
+    def grip_object(self):
         closed = self.grip('grip', 740, lambda p: p >= 0)
-        holding = closed['position_pulses'] < 700
-        self.log('grasp', product=product, holding=holding, position=closed['position_pulses'],
-                 current=closed['current'], note='object detected' if holding else 'empty close (no object)')
-        self.l('lift', above)
-        self.l('home_after_lift', P['home']['posx'])
-        # 3. Place into the box slot
-        self.j('via_point', P['via_point']['posj'])
+        self.holding = closed['position_pulses'] < 700
+        self.log('grasp', product=self._product, holding=self.holding, position=closed['position_pulses'],
+                 current=closed['current'], note='object detected' if self.holding else 'empty close (no object)')
+        if self.args.require_object and not self.holding:
+            raise RuntimeError('No object in the gripper (empty close)')
+
+    def retract(self):
+        self.l('lift', self._above)
+        self.l('home_after_lift', self.poses['poses']['home']['posx'])
+
+    def place(self, box_id=1):
+        P, up = self.poses['poses'], self.poses['motion']['approach_offset_z']
+        slot = int(str(box_id).split('-')[-1]) if box_id else 1
+        if not (self.poses['box_slots'].get(slot) or {}).get('taught'):
+            self.log('box_fallback', requested=box_id, used_slot=1, reason='slot not taught')
+            slot = 1
         slot_pose = self.poses['box_slots'][slot]['posx']
-        box_hi_posj = [P['home']['posj'][0] + 180.0, *P['home']['posj'][1:]]
-        self.j('box_high', box_hi_posj)
-        self.l('box_place', [*slot_pose[:2], slot_pose[2], *slot_pose[3:]], self.args.dvel)
+        self.j('via_point', P['via_point']['posj'])
+        self.j('box_high', [P['home']['posj'][0] + 180.0, *P['home']['posj'][1:]])
+        self.l('box_place', list(slot_pose), self.args.dvel)
         self.grip('release', 0, lambda p: p <= OPEN_MAX)
         self.l('box_retreat', [*slot_pose[:2], slot_pose[2] + up * 4 / 3, *slot_pose[3:]])
         self.j('via_return', P['via_point']['posj'])
-        self.j('home_return', P['home']['posj'])
-        self.log('cycle_ok', cycle=cycle, product=product, box_slot=slot, holding=holding)
+        self.last_slot = slot
+
+    def home(self):
+        self.j('home_return', self.poses['poses']['home']['posj'])
+
+    def stop(self):
+        self.raw.stop()
+
+    def run(self, cycle):
+        self.pre_scan()
+        uid = self.scan()
+        product, box = TAGS.get(uid, (self.args.product, 1))
+        target = self.detect(product)
+        self.approach(target)
+        self.grip_object()
+        self.retract()
+        self.place(box)
+        self.home()
+        self.log('cycle_ok', cycle=cycle, product=target['product'], box_slot=self.last_slot, holding=self.holding)
+
+
+class OrchestratorRobot:
+    """Adapter: Orchestrator robot/scanner/vision interfaces -> Cycle steps."""
+
+    def __init__(self, cycle):
+        self.c = cycle
+
+    def pre_scan(self): self.c.pre_scan()
+    def scan(self): return self.c.scan()
+    def detect(self, task): return self.c.detect(task)
+    def approach(self, pose): self.c.approach(pose)
+    def grip(self): self.c.grip_object()
+    def retract(self): self.c.retract()
+    def place(self, box): self.c.place(box)
+    def home(self): self.c.home()
+    def stop(self): self.c.stop()
 
 
 def main(argv=None):
@@ -286,6 +340,8 @@ def main(argv=None):
     parser.add_argument('--lvel', type=float, default=30.0, help='mm/s for transfer moves')
     parser.add_argument('--dvel', type=float, default=15.0, help='mm/s for descents')
     parser.add_argument('--log', type=Path)
+    parser.add_argument('--require-object', action='store_true', help='fail when the gripper closes empty')
+    parser.add_argument('--api', help='run the repo RFID Orchestrator against this web API, e.g. http://127.0.0.1:8000')
     args = parser.parse_args(argv)
     if args.mode == 'real' and not args.confirm_real:
         parser.error('--mode real requires --confirm-real')
@@ -305,7 +361,15 @@ def main(argv=None):
         runner = Cycle(raw, poses, products, args, log)
         while args.cycles == 0 or cycle < args.cycles:
             cycle += 1
-            runner.run(cycle)
+            if args.api:
+                import logging
+                from robot_rfid.orchestrator import APIClient, Orchestrator
+                logging.basicConfig(level=logging.INFO, format='%(asctime)s %(name)s %(message)s')
+                adapter = OrchestratorRobot(runner)
+                task = Orchestrator(APIClient(args.api), adapter, adapter, adapter).run_box(lambda: None)
+                log('cycle_ok', cycle=cycle, scenario='orchestrator', task=task)
+            else:
+                runner.run(cycle)
     except KeyboardInterrupt:
         log('interrupted', cycle=cycle)
         code = 130
