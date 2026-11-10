@@ -1,0 +1,6 @@
+{
+  "date": "2026-11-10",
+  "integrated_main": "59a4008b06e738936f72790c97f24445aa7d7cd8",
+  "yolo_base_commit": "c265ffb0424447dcef8ce67ef72c2172a3eac6ad",
+  "note": "Historical source backup before authorized deletion of the company PC project folder. Main remains the validated runtime. No environments, databases, model weights or login credentials included."
+}
