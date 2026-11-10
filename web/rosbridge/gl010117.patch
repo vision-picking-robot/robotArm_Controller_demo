@@ -1,0 +1,361 @@
+--- a/dsr_hardware2/src/dsr_hw_interface2.cpp
++++ b/dsr_hardware2/src/dsr_hw_interface2.cpp
+@@ -15,4 +15,11 @@
+ #include <boost/bind.hpp>
+ #include <sstream>
++#include <atomic>
++#include <condition_variable>
++#include <mutex>
++#include "dsr_msgs2/msg/robot_disconnection.hpp"
++#include <chrono>
++#include <cstdlib>
++#include <cstring>
+ #include <string>
+ #include <vector>
+@@ -31,6 +38,58 @@
+ sensor_msgs::msg::JointState msg;
+ bool g_bIsEmulatorMode = FALSE;
+-bool g_bHasControlAuthority = FALSE;
+-bool g_bTpInitailizingComplted = FALSE;
++static std::mutex access_mutex;
++static std::condition_variable access_changed;
++static unsigned long access_generation = 0;
++static MONITORING_ACCESS_CONTROL last_access = MONITORING_ACCESS_CONTROL_LOSS;
++
++static void record_access(MONITORING_ACCESS_CONTROL event) {
++    {
++        std::lock_guard<std::mutex> lock(access_mutex);
++        last_access = event;
++        ++access_generation;
++    }
++    access_changed.notify_all();
++}
++static std::atomic<bool> link_lost{false};
++static std::atomic<bool> tp_ready{false};
++
++bool sdk_has_authority() {
++    std::lock_guard<std::mutex> lock(access_mutex);
++    return !link_lost && last_access == MONITORING_ACCESS_CONTROL_GRANT;
++}
++
++bool sdk_reclaim_access(std::string& message) {
++    static std::mutex requests;
++    std::unique_lock<std::mutex> request(requests, std::try_to_lock);
++    if (!request) { message = "다른 회수 요청을 처리 중입니다."; return false; }
++    if (link_lost || !tp_ready) { message = "SDK 연결 또는 초기화가 완료되지 않았습니다."; return false; }
++
++    std::unique_lock<std::mutex> lock(access_mutex);
++    if (last_access == MONITORING_ACCESS_CONTROL_GRANT) {
++        message = "드라이버가 이미 제어권을 보유하고 있습니다."; return true;
++    }
++    const auto before = access_generation;
++    lock.unlock();  // The SDK may deliver its callback during the request.
++    const auto state = Drfl.GetRobotState();
++    if (state != STATE_SAFE_OFF && state != STATE_STANDBY) {
++        message = "로봇이 SAFE_OFF 또는 STANDBY일 때 회수할 수 있습니다."; return false;
++    }
++    if (link_lost || !Drfl.manage_access_control(MANAGE_ACCESS_CONTROL_FORCE_REQUEST)) {
++        message = "SDK가 강제 요청을 전송하지 못했습니다."; return false;
++    }
++
++    lock.lock();
++    if (!access_changed.wait_for(lock, std::chrono::seconds(10), [&] { return access_generation != before || link_lost; })) {
++        message = "10초 안에 응답이 없어 회수 결과를 확인할 수 없습니다."; return false;
++    }
++    if (link_lost) { message = "SDK 연결이 끊겨 회수 결과를 확인할 수 없습니다."; return false; }
++    if (last_access == MONITORING_ACCESS_CONTROL_GRANT) {
++        message = "드라이버가 제어권을 회수했습니다 (GRANT)."; return true;
++    }
++    message = last_access == MONITORING_ACCESS_CONTROL_DENY
++        ? "제어기가 회수 요청을 거절했습니다 (DENY)." : "드라이버가 제어권을 잃었습니다 (LOSS).";
++    return false;
++}
++
+ bool g_bHommingCompleted = FALSE;
+ 
+@@ -188,5 +247,14 @@
+         usleep(nDelay);
+     }
+-    if(Drfl.open_connection(m_host, m_port))
++    link_lost = false;
++    record_access(MONITORING_ACCESS_CONTROL_LOSS);
++    tp_ready = false;
++    static auto disconnect_publisher = m_node_->create_publisher<dsr_msgs2::msg::RobotDisconnection>("robot_disconnection", 10);
++    Drfl.set_on_disconnected([] {
++        link_lost = true;
++        record_access(MONITORING_ACCESS_CONTROL_LOSS);
++        disconnect_publisher->publish(dsr_msgs2::msg::RobotDisconnection{});
++    });
++    if (Drfl.open_connection(m_host, m_port) && !link_lost)
+     {
+         RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n"); 
+@@ -200,5 +268,8 @@
+         //--- Get version -------------------------------------            
+         SYSTEM_VERSION tSysVerion = {'\0', };
+-        assert(Drfl.get_system_version(&tSysVerion));
++        if (!Drfl.get_system_version(&tSysVerion) || !tSysVerion._szController[0] || link_lost) {
++            RCLCPP_ERROR(s_node_->get_logger(), "SDK session ended before the controller returned its version");
++            return CallbackReturn::ERROR;
++        }
+ 
+         //--- Get DRCF version & convert to integer  ----------            
+@@ -225,15 +296,49 @@
+ 
+         //--- Check Robot State : STATE_STANDBY ---               
+-        while ((Drfl.GetRobotState() != STATE_STANDBY)){
++        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
++        while (!tp_ready && !link_lost && std::chrono::steady_clock::now() < deadline) usleep(nDelay);
++        if (link_lost || !tp_ready) return CallbackReturn::ERROR;
++        if (!sdk_has_authority()) {
++            const char* option = std::getenv("DOOSAN_ACCESS_REQUEST");
++            const bool force = option && std::strcmp(option, "--force-request-access") == 0;
++            const auto state = Drfl.GetRobotState();
++            if (force && state != STATE_STANDBY && state != STATE_SAFE_OFF) {
++                RCLCPP_ERROR(s_node_->get_logger(), "Forced access request not sent: robot state %d", int(state));
++                return CallbackReturn::ERROR;
++            }
++            const auto request = force ? MANAGE_ACCESS_CONTROL_FORCE_REQUEST : MANAGE_ACCESS_CONTROL_REQUEST;
++            if (!Drfl.manage_access_control(request)) {
++                RCLCPP_ERROR(s_node_->get_logger(), "%s access request not sent", force ? "Forced" : "Normal");
++                return CallbackReturn::ERROR;
++            }
++            RCLCPP_INFO(s_node_->get_logger(), "%s access request sent", force ? "Forced" : "Normal");
++        }
++        bool servo_requested = false;
++        while (!link_lost && std::chrono::steady_clock::now() < deadline) {
++            if (sdk_has_authority()) {
++                const auto state = Drfl.GetRobotState();
++                if (state == STATE_STANDBY) break;
++                if (state == STATE_SAFE_OFF && !servo_requested) {
++                    servo_requested = true;
++                    Drfl.set_robot_control(CONTROL_SERVO_ON);
++                }
++            }
+             usleep(nDelay);
+         }
++        if (!sdk_has_authority() || Drfl.GetRobotState() != STATE_STANDBY) {
++            RCLCPP_ERROR(s_node_->get_logger(), "Controller authority / STANDBY unavailable");
++            return CallbackReturn::ERROR;
++        }
+ 
+         //--- Set Robot mode : MANUAL or AUTO
+-        assert(Drfl.SetRobotMode(ROBOT_MODE_AUTONOMOUS));
++        // Keep the controller's mode across driver restarts. Only an explicit
++        // operator request should take a manually taught robot back to Auto.
++        const auto mode = Drfl.get_robot_mode();
++        if (mode != ROBOT_MODE_MANUAL && mode != ROBOT_MODE_AUTONOMOUS) return CallbackReturn::ERROR;
+ 
+         //--- Set Robot mode : virual or real 
+         ROBOT_SYSTEM eTargetSystem = ROBOT_SYSTEM_VIRTUAL;
+         if(m_mode == "real") eTargetSystem = ROBOT_SYSTEM_REAL;
+-        assert(Drfl.SetRobotSystem(eTargetSystem));
++        if (!Drfl.SetRobotSystem(eTargetSystem)) return CallbackReturn::ERROR;
+ 
+         // to compare with g_joints[].cmd
+@@ -303,4 +408,8 @@
+     msg.header.stamp.nanosec = now_ns;
+ 
++    auto pose = Drfl.get_current_posj();
++    if (link_lost || !pose) return return_type::ERROR;
++    for (float angle : pose->_fPosition)
++        if (!std::isfinite(angle)) return return_type::ERROR;
+     msg.name.push_back("joint_1");
+     msg.name.push_back("joint_2");
+@@ -309,5 +418,4 @@
+     msg.name.push_back("joint_5");
+     msg.name.push_back("joint_6");
+-    LPROBOT_POSE pose = Drfl.GetCurrentPose();
+     // for (int i = 0; i < 6; i++){
+     //     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), " : %.2f", pose->_fPosition[i]);
+@@ -320,5 +428,5 @@
+     for (auto i = 0ul; i < joint_position_command_.size(); i++)
+     {
+-        joint_position_[i] = joint_position_command_[i];
++        joint_position_[i] = deg2rad(pose->_fPosition[i]);
+         
+         g_joints[i].pos = deg2rad(pose->_fPosition[i]);
+@@ -401,8 +509,5 @@
+     // request control authority after TP initialized
+     cout << "[callback OnTpInitializingCompletedCB] tp initializing completed" << endl;
+-    g_bTpInitailizingComplted = TRUE;
+-    //Drfl.manage_access_control(MANAGE_ACCESS_CONTROL_REQUEST);
+-    Drfl.manage_access_control(MANAGE_ACCESS_CONTROL_FORCE_REQUEST);
+-
++    tp_ready = true;
+     g_stDrState.bTpInitialized = TRUE;
+ }
+@@ -633,50 +738,4 @@
+     // Only work within 50msec
+     
+-    switch((unsigned char)eState)
+-    {
+-#if 0 // TP initializing logic, Don't use in API level. (If you want to operate without TP, use this logic)       
+-    case eSTATE_NOT_READY:
+-    if (g_bHasControlAuthority) Drfl.set_robot_control(CONTROL_INIT_CONFIG);
+-        break;
+-    case eSTATE_INITIALIZING:
+-        // add initalizing logic
+-        if (g_bHasControlAuthority) Drfl.set_robot_control(CONTROL_ENABLE_OPERATION);
+-        break;
+-#endif      
+-    case STATE_EMERGENCY_STOP:
+-        // popup
+-        break;
+-    case STATE_STANDBY:
+-    case STATE_MOVING:
+-    case STATE_TEACHING:
+-        break;
+-    case STATE_SAFE_STOP:
+-        if (g_bHasControlAuthority) {
+-            Drfl.set_safe_stop_reset_type(SAFE_STOP_RESET_TYPE_DEFAULT);
+-            Drfl.set_robot_control(CONTROL_RESET_SAFET_STOP);
+-            Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
+-        }
+-        break;
+-    case STATE_SAFE_OFF:
+-        if (g_bHasControlAuthority){
+-            Drfl.set_robot_control(CONTROL_SERVO_ON);
+-            Drfl.set_robot_mode(ROBOT_MODE_AUTONOMOUS);   //Idle Servo Off 후 servo on 하는 상황 발생 시 set_robot_mode 명령을 전송해 manual 로 전환. add 2020/04/28
+-        } 
+-        break;
+-    case STATE_SAFE_STOP2:
+-        if (g_bHasControlAuthority) Drfl.set_robot_control(CONTROL_RECOVERY_SAFE_STOP);
+-        break;
+-    case STATE_SAFE_OFF2:
+-        if (g_bHasControlAuthority) {
+-            Drfl.set_robot_control(CONTROL_RECOVERY_SAFE_OFF);
+-        }
+-        break;
+-    case STATE_RECOVERY:
+-        Drfl.set_robot_control(CONTROL_RESET_RECOVERY);
+-        break;
+-    default:
+-        break;
+-    }
+-
+     cout << "[callback OnMonitoringStateCB] current state: " << GetRobotStateString((int)eState) << endl;
+     g_stDrState.nRobotState = (int)eState;
+@@ -690,3 +749,4 @@
+     cout << "[callback OnMonitoringAccessControlCB] eAccCtrl: " << eAccCtrl << endl;
++    if (eAccCtrl != MONITORING_ACCESS_CONTROL_REQUEST) record_access(eAccCtrl);
+     switch(eAccCtrl)
+     {
+@@ -699,6 +759,4 @@
+         RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    Access control granted ");
+         RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n");   
+-        g_bHasControlAuthority = TRUE;
+-        OnMonitoringStateCB(Drfl.GetRobotState());
+         break;
+     case MONITORING_ACCESS_CONTROL_DENY:
+@@ -708,8 +766,4 @@
+         break;
+     case MONITORING_ACCESS_CONTROL_LOSS:
+-        g_bHasControlAuthority = FALSE;
+-        if (g_bTpInitailizingComplted) {
+-            Drfl.ManageAccessControl(MANAGE_ACCESS_CONTROL_REQUEST);
+-        }
+         break;
+     default:
+--- a/dsr_controller2/src/dsr_controller2.cpp
++++ b/dsr_controller2/src/dsr_controller2.cpp
+@@ -29,4 +29,7 @@
+ 
+ extern void* get_drfl();
++#include "direct_teach.hpp"
++static DirectTeach direct_teach;
++extern bool sdk_reclaim_access(std::string& message);
+ CDRFLEx *Drfl = (CDRFLEx*)get_drfl();
+ rclcpp::Node::SharedPtr m_node_ = nullptr;
+@@ -122,3 +125,4 @@
+ auto set_robot_mode_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetRobotMode::Request> req, std::shared_ptr<dsr_msgs2::srv::SetRobotMode::Response> res) -> bool
+ {
++    std::lock_guard<std::mutex> lock(direct_teach.commands);
+     RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"set_robot_mode_cb() called and calling Drfl->set_robot_mode(%d)",req->robot_mode);
+@@ -127,2 +131,3 @@
++    res->success = direct_teach.verify_mode(*Drfl, (ROBOT_MODE)req->robot_mode, res->success);
+     return true;
+ };
+@@ -155,5 +160,5 @@
+ 
+     res->robot_state = Drfl->get_robot_state();
+-    res->success = true;
++    res->success = sdk_has_authority();
+     return true;
+ };
+@@ -234,4 +239,6 @@
+     RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movej_cb() %p", Drfl);
+     res->success = false;
++    std::unique_lock<std::mutex> mode_lock(direct_teach.commands, std::try_to_lock);
++    if (!mode_lock || !direct_teach.auto_ready(*Drfl) || Drfl->get_robot_state() != STATE_STANDBY) return false;
+     std::array<float, NUM_JOINT> target_pos;
+     std::copy(req->pos.cbegin(), req->pos.cend(), target_pos.begin());
+@@ -2046,2 +2053,14 @@
++  teach_status_ = get_node()->create_service<std_srvs::srv::Trigger>("system/direct_teach_status",
++    [](std_srvs::srv::Trigger::Request::SharedPtr, std_srvs::srv::Trigger::Response::SharedPtr res) {
++        res->success = direct_teach.status(*Drfl, res->message);
++    });
++  teach_set_ = get_node()->create_service<std_srvs::srv::SetBool>("system/set_direct_teach",
++    [](std_srvs::srv::SetBool::Request::SharedPtr req, std_srvs::srv::SetBool::Response::SharedPtr res) {
++        res->success = direct_teach.set_enabled(*Drfl, req->data, res->message);
++    });
++  reclaim_service_ = get_node()->create_service<std_srvs::srv::Trigger>("system/reclaim_control",
++    [](std_srvs::srv::Trigger::Request::SharedPtr, std_srvs::srv::Trigger::Response::SharedPtr response) {
++        response->success = sdk_reclaim_access(response->message);
++    });
+   // Subscription declarations
+   m_sub_jog_multi_axis                = get_node()->create_subscription<dsr_msgs2::msg::JogMultiAxis>("jog_multi", 10, jog_multi_axis_cb);
+@@ -2279,4 +2298,7 @@
+ controller_interface::CallbackReturn RobotController::on_deactivate(const rclcpp_lifecycle::State &)
+ {
++  teach_status_.reset();
++  teach_set_.reset();
++  reclaim_service_.reset();
+   if (m_node_) {
+     RCLCPP_INFO(rclcpp::get_logger("dsr_test"),"on deactivate");
+--- a/dsr_bringup2/launch/dsr_bringup2_rviz.launch.py
++++ b/dsr_bringup2/launch/dsr_bringup2_rviz.launch.py
+@@ -124,5 +124,5 @@
+         output="log",
+         arguments=["-d", rviz_config_file],
+-        # condition=IfCondition(gui),
++        condition=IfCondition(LaunchConfiguration('gui')),
+     )
+ 
+@@ -170,5 +170,5 @@
+         robot_state_pub_node,
+         robot_controller_spawner,
+-        joint_state_broadcaster_spawner,
++        # The hardware publishes measured angles on joint_states directly.
+         delay_rviz_after_joint_state_broadcaster_spawner,
+         # delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
+--- a/dsr_controller2/include/dsr_controller2/dsr_controller2.hpp
++++ b/dsr_controller2/include/dsr_controller2/dsr_controller2.hpp
+@@ -59,4 +59,6 @@
+ #include "dsr_msgs2/srv/get_robot_system.hpp"
+ #include "dsr_msgs2/srv/get_robot_state.hpp"
++#include "std_srvs/srv/trigger.hpp"
++#include "std_srvs/srv/set_bool.hpp"
+ #include "dsr_msgs2/srv/set_robot_speed_mode.hpp"
+ #include "dsr_msgs2/srv/get_robot_speed_mode.hpp"
+@@ -552,4 +554,6 @@
+   rclcpp::Service<dsr_msgs2::srv::SetRobotSystem>::SharedPtr          m_nh_srv_set_robot_system;
+   rclcpp::Service<dsr_msgs2::srv::GetRobotSystem>::SharedPtr          m_nh_srv_get_robot_system;
++  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr reclaim_service_, teach_status_;
++  rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr teach_set_;
+   rclcpp::Service<dsr_msgs2::srv::GetRobotState>::SharedPtr           m_nh_srv_get_robot_state;
+   rclcpp::Service<dsr_msgs2::srv::SetRobotSpeedMode>::SharedPtr       m_nh_srv_set_robot_speed_mode;
+--- a/dsr_controller2/CMakeLists.txt
++++ b/dsr_controller2/CMakeLists.txt
+@@ -18,4 +18,5 @@
+   control_msgs
+   std_msgs
++  std_srvs
+   dsr_hardware2
+   rclcpp_components
+--- a/dsr_controller2/package.xml
++++ b/dsr_controller2/package.xml
+@@ -26,3 +26,4 @@
+   <depend>control_msgs</depend>
+   <depend>std_msgs</depend>
++  <depend>std_srvs</depend>
+   <depend>dsr_hardware2</depend>

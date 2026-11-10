@@ -1,4 +1,5 @@
 import asyncio
+import itertools
 import json
 import os
 import tempfile
@@ -181,7 +182,8 @@ class RobotTests(unittest.TestCase):
 
 
 class RobotLifecycleTests(unittest.IsolatedAsyncioTestCase):
-    async def test_sdk_reconnect_requires_new_driver_joints_and_a_valid_state_response(self):
+    @patch('app.robot.time.monotonic', side_effect=itertools.count(step=0.01))
+    async def test_sdk_reconnect_requires_new_driver_joints_and_a_valid_state_response(self, _clock):
         monitor = RobotMonitor(RobotSettings(ros_pc_ip="127.0.0.1"))
         socket = monitor.socket = object()
         monitor.call_service = AsyncMock(return_value={"success": False})

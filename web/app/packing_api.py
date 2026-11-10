@@ -55,27 +55,15 @@ router = APIRouter(prefix="/api/packing")
 
 @router.post("/rfid-scan")
 def rfid_scan_and_log(body: RfidScanTrigger, request: Request):
-    import threading
     from uuid import uuid4
-    from robot_rfid.database import SEED_TAGS, normalize_uid
-    from robot_rfid.rfid_scanner import RFIDScanner
+    from robot_rfid.services import ReaderBusy, ReaderUnavailable, enqueue_scan, scan_uid
 
-    source = "preset"
-    scanned_uid = body.uid
-    if not scanned_uid:
-        stop = threading.Event()
-        timer = threading.Timer(1.2, stop.set)
-        timer.start()
-        try:
-            scanned_uid = RFIDScanner().scan(stop=stop)
-            source = "hardware_pcsc"
-        except Exception:
-            scanned_uid = SEED_TAGS[0][0]
-            source = "mock_fallback"
-        finally:
-            timer.cancel()
     try:
-        normalized = normalize_uid(scanned_uid)
+        normalized, source = scan_uid(body.uid, 1.2)
+    except ReaderBusy as exc:
+        raise DomainError(str(exc), 409) from exc
+    except ReaderUnavailable as exc:
+        raise DomainError(str(exc), 503) from exc
     except ValueError as exc:
         raise DomainError(str(exc), 422) from exc
 
@@ -88,10 +76,9 @@ def rfid_scan_and_log(body: RfidScanTrigger, request: Request):
     created = False
     if rfid_db is not None:
         try:
-            task, created = rfid_db.enqueue(normalized, body.quantity, str(uuid4()))
-        except ValueError:
-            task = rfid_db.current_task()
-            created = False
+            task, created = enqueue_scan(rfid_db, normalized, body.quantity, str(uuid4()))
+        except ValueError as exc:
+            raise DomainError(str(exc), 409) from exc
 
     packing = request.app.state.pipeline.packing
     with packing.store.write_transaction() as write:

@@ -110,37 +110,43 @@
         "profile": "high",
         "override": null,
         "motion": null,
-        "via_pose": null
+        "via_pose": null,
+        "target_joints": null
       },
       "3": {
         "profile": "high",
         "override": null,
         "motion": null,
-        "via_pose": null
+        "via_pose": null,
+        "target_joints": null
       },
       "4": {
         "profile": "high",
         "override": null,
         "motion": null,
-        "via_pose": null
+        "via_pose": null,
+        "target_joints": null
       },
       "5": {
         "profile": "low",
         "override": null,
         "motion": null,
-        "via_pose": null
+        "via_pose": null,
+        "target_joints": null
       },
       "6": {
         "profile": "low",
         "override": null,
         "motion": null,
-        "via_pose": null
+        "via_pose": null,
+        "target_joints": null
       },
       "7": {
         "profile": "low",
         "override": null,
         "motion": null,
-        "via_pose": null
+        "via_pose": null,
+        "target_joints": null
       },
       "8": {
         "profile": "high",
@@ -153,61 +159,71 @@
           44.999991,
           179.999802,
           0
-        ]
+        ],
+        "target_joints": null
       },
       "9": {
         "profile": "high",
         "override": null,
         "motion": null,
-        "via_pose": null
+        "via_pose": null,
+        "target_joints": null
       },
       "10": {
         "profile": "high",
         "override": null,
         "motion": null,
-        "via_pose": null
+        "via_pose": null,
+        "target_joints": null
       },
       "11": {
         "profile": "low",
         "override": null,
         "motion": null,
-        "via_pose": null
+        "via_pose": null,
+        "target_joints": null
       },
       "12": {
         "profile": "low",
         "override": null,
         "motion": null,
-        "via_pose": null
+        "via_pose": null,
+        "target_joints": null
       },
       "13": {
         "profile": "low",
         "override": null,
         "motion": null,
-        "via_pose": null
+        "via_pose": null,
+        "target_joints": null
       },
       "14": {
         "profile": "high",
         "override": null,
         "motion": null,
-        "via_pose": null
+        "via_pose": null,
+        "target_joints": null
       },
       "15": {
         "profile": "high",
         "override": null,
         "motion": null,
-        "via_pose": null
+        "via_pose": null,
+        "target_joints": null
       },
       "16": {
         "profile": "high",
         "override": null,
         "motion": null,
-        "via_pose": null
+        "via_pose": null,
+        "target_joints": null
       },
       "17": {
         "profile": "high",
         "override": null,
         "motion": null,
-        "via_pose": null
+        "via_pose": null,
+        "target_joints": null
       }
     },
     "virtual": {

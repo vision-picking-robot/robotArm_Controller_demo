@@ -99,7 +99,7 @@ def create_app(settings=None, pipeline_factory=Pipeline, state_root=None):
     application.include_router(voice_router)
     application.include_router(picking_integration_router)
     install_robot_routes(application)
-    rfid_root = Path(state_root or settings.state_dir)
+    rfid_root = Path(state_root) if state_root is not None else REPO_ROOT / 'state'
     rfid_root.mkdir(parents=True, exist_ok=True)
     install_rfid_routes(application, db_path=os.getenv("RFID_DB", str(rfid_root / "rfid.db")))
 

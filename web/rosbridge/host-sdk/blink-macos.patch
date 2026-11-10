@@ -1,0 +1,58 @@
+diff --git a/blink/linux.h b/blink/linux.h
+index 51973e2..0e9a020 100644
+--- a/blink/linux.h
++++ b/blink/linux.h
+@@ -232,6 +232,7 @@
+ #define FUTEX_WAIT_LINUX           0
+ #define FUTEX_WAKE_LINUX           1
+ #define FUTEX_WAIT_BITSET_LINUX    9
++#define FUTEX_WAKE_BITSET_LINUX 10
+ #define FUTEX_PRIVATE_FLAG_LINUX   128
+ #define FUTEX_CLOCK_REALTIME_LINUX 256
+ 
+diff --git a/blink/syscall.c b/blink/syscall.c
+index 34cc01c..3eed3e7 100644
+--- a/blink/syscall.c
++++ b/blink/syscall.c
+@@ -674,7 +674,15 @@ static int SysFutexWait(struct Machine *m,  //
+     if (!(0 <= timeout.tv_nsec && timeout.tv_nsec < 1000000000)) {
+       return einval();
+     }
+-    deadline = AddTime(now, timeout);
++    if (op == FUTEX_WAIT_LINUX) {
++      deadline = AddTime(now, timeout);
++    } else if (op & FUTEX_CLOCK_REALTIME_LINUX) {
++      deadline = timeout;
++    } else {
++      struct timespec mono = GetMonotonic();
++      deadline = CompareTime(timeout, mono) > 0
++          ? AddTime(now, SubtractTime(timeout, mono)) : now;
++    }
+   } else {
+     deadline = GetMaxTime();
+   }
+@@ -762,10 +770,11 @@ static int SysFutex(struct Machine *m,  //
+       return SysFutexWake(m, uaddr, val);
+     case FUTEX_WAIT_BITSET_LINUX:
+     case FUTEX_WAIT_BITSET_LINUX | FUTEX_CLOCK_REALTIME_LINUX:
+-      // will be supported soon
+-      // avoid logging when cosmo feature checks this
+-      if (!m->system->iscosmo) goto DefaultCase;
+-      return einval();
++      if (val3 != 0xffffffffu) goto DefaultCase;
++      return SysFutexWait(m, uaddr, op, val, timeout_addr);
++    case FUTEX_WAKE_BITSET_LINUX:
++      if (val3 != 0xffffffffu) goto DefaultCase;
++      return SysFutexWake(m, uaddr, val);
+     default:
+     DefaultCase:
+       LOGF("unsupported %s op %#x", "futex", op);
+@@ -1094,7 +1103,7 @@ static i64 SysBrk(struct Machine *m, i64 addr) {
+   BEGIN_NO_PAGE_FAULTS;
+   LOCK(&m->system->mmap_lock);
+   MEM_LOGF("brk(%#" PRIx64 ") currently %#" PRIx64, addr, m->system->brk);
+-  pagesize = FLAG_pagesize;
++  pagesize = HasLinearMapping() ? FLAG_pagesize : 4096;
+   addr = ROUNDUP(addr, pagesize);
+   if (addr >= kNullSize) {
+     if (addr > m->system->brk) {

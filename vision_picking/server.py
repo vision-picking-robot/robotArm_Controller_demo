@@ -61,5 +61,5 @@ def create_app(controller=None):
     def status(identifier: str):
         return controller.status(identifier)
 
-    install_rfid_routes(app, db_path=os.getenv('RFID_DB', str(ROOT / 'state/rfid.db')))
+    install_rfid_routes(app, db_path=os.getenv('RFID_DB', str(controller.journal.parent / 'rfid.db')))
     return app
