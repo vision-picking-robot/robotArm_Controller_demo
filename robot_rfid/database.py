@@ -1,5 +1,6 @@
 import re
 import sqlite3
+from pathlib import Path
 from contextlib import contextmanager, closing
 from datetime import datetime
 from uuid import uuid4
@@ -22,6 +23,13 @@ SEEDS = [
 SEED_TAGS = SEEDS
 
 
+class ActiveTaskError(ValueError):
+    """Return the matching task snapshot, never an unrelated queue head."""
+    def __init__(self, task):
+        super().__init__('tag already has an active task')
+        self.task = task
+
+
 class Database:
     def __init__(self, path='rfid.db'):
         self.path = str(path)
@@ -34,6 +42,7 @@ class Database:
             yield db
 
     def initialize(self):
+        Path(self.path).parent.mkdir(parents=True, exist_ok=True)
         with self.connect() as db:
             db.executescript('''
                 CREATE TABLE IF NOT EXISTS product_tag_mappings (
@@ -74,6 +83,10 @@ class Database:
             row = db.execute('SELECT * FROM product_tag_mappings WHERE tag_uid=?', (normalize_uid(uid),)).fetchone()
             return dict(row) if row else None
 
+    def products(self):
+        with self.connect() as db:
+            return [dict(row) for row in db.execute('SELECT * FROM product_tag_mappings ORDER BY rowid')]
+
     def enqueue(self, uid, quantity, event_id):
         uid = normalize_uid(uid)
         with self.connect() as db:
@@ -87,7 +100,7 @@ class Database:
                 raise KeyError(uid)
             old = db.execute("SELECT * FROM tasks WHERE tag_uid=? AND status IN ('READY','PICKING')", (uid,)).fetchone()
             if old:
-                raise ValueError('tag already has an active task')
+                raise ActiveTaskError(dict(old))
             task_id = str(uuid4())
             db.execute('INSERT INTO tasks(task_id,event_id,tag_uid,quantity,created_at) VALUES (?,?,?,?,?)',
                        (task_id, event_id, uid, quantity, datetime.now().astimezone().isoformat()))

@@ -1,16 +1,49 @@
 # E0509 + RH-P12-RN(A) 비전 피킹 인수인계
 
-**2026-11-10 오후 7시 실습실 기준:** Ubuntu 24.04 / ROS 2 Jazzy / Python 3.12.
+**main 실습실 실행 기준:** Ubuntu 24.04 / ROS 2 Jazzy / Python 3.12 (2026-11-10 검증).
 기본값은 MOCK이며 로봇에 연결하지 않는다. 실물 보정·TCP·상품별 파지값 검증은 남아 있다.
 이 저장소만 clone하면 제어기, 웹/음성 소스, 설정, 분석 문서가 함께 내려온다.
 
 ## 노트북에서 바로 시작
+
+### 이미 clone한 실습실 노트북: main 갱신 후 이어서 실행
+
+실행 중인 이전 서버는 해당 터미널에서 `Ctrl+C`로 종료한 후 아래 명령을 실행한다.
+저장소 경로가 다르면 첫 번째 줄만 실제 clone 경로로 바꾼다.
+
+```bash
+cd ~/vision_lab/robotArm_Controller_demo
+git switch main
+git pull --ff-only origin main
+
+source /opt/ros/jazzy/setup.bash
+[ -d .venv ] || python3.12 -m venv --system-site-packages .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+
+# 이전 터미널의 실물 설정을 해제하고 MOCK부터 확인
+unset PICKING_CONFIG
+export MOCK_MODE=true
+python mock_demo.py
+python scripts/test_gripper.py --mode mock --action status
+
+# 제어 API 8011 + 웹 8000을 함께 기동 (MOCK 전용)
+python scripts/start_lab.py
+```
+
+웹은 `http://127.0.0.1:8000`, API 문서는 `http://127.0.0.1:8011/docs`다.
+런처는 MOCK 모드와 공유 RFID DB 경로를 사용한다. 종료는 런처 터미널의 `Ctrl+C`다.
+기존 `config/hardware.local.json` 등 현장 전용 설정은 Git 제외 대상이며 `git pull`로 배포하지 않는다.
+실물은 아래 별도 절차에서 ROS 작업공간과 실측 설정을 적용한다.
+
+### 처음 사용하는 노트북: clone 및 환경 설치
 
 Ubuntu 24.04 터미널:
 
 ```bash
 git clone https://github.com/vision-picking-robot/robotArm_Controller_demo.git
 cd robotArm_Controller_demo
+git switch main
 python3.12 -m venv --system-site-packages .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
@@ -155,6 +188,18 @@ Web Speech API의 `ko-KR` 전사를 기존 packing 처리기로 전달한다. Ch
 
 ## 문서·검증
 
+최신 커밋의 검증·최적화 결과는 [최신 검증 리포트](docs/latest-validation-review.md)에 있다.
+검증된 `review/5baa41d-validation`의 수정은 **main에 병합되었다**. 실습실에서는 main을 갱신해 사용한다.
+대시보드 정적 파일 40개와 기존 17단계 작업 순서를 보존했다.
+
+| 기준 환경에서 완료한 검증 | 결과 |
+|---|---|
+| Ubuntu 24.04 제어기·RFID | 45개 통과 |
+| Ubuntu 24.04 웹 전체 회귀 | 265개 통과 |
+| JavaScript UI·음성·작업 순서 | 50개 통과 |
+| ROS 2 Jazzy 두산 드라이버·그리퍼 플러그인 | 빌드·링크·모의 테스트 통과 |
+| wheel 단독 설치 및 MOCK API | 통과 |
+
 - [OS/ROS 확정: Ubuntu 24.04 / ROS 2 Jazzy](docs/01-environment-report.md)
 - [통신·웨이포인트·좌표 변환·그리퍼 결함 명세](docs/02-legacy-assets.md)
 - [Web Speech API·페이로드·웹 연결 계약](docs/03-pipeline-and-speech.md)
@@ -165,10 +210,12 @@ Web Speech API의 `ko-KR` 전사를 기존 packing 처리기로 전달한다. Ch
 원본 소스 출처와 snapshot 범위는 [웹 출처](docs/web-source-provenance.json)에 기록했다.
 
 ```bash
-python -m pytest tests -q
+python -m pytest tests robot_rfid -q
+(cd web && python -m pytest tests -q)
 # Node.js가 있으면 보존된 UI 및 음성 JavaScript 검사
 node --test web/tests/*.test.cjs
 ```
 
-로컬 MOCK·API·선택 검사와 실물 파지 성공은 다르다. 전체 웹 회귀의 남은 실패와 미검증
-C++/ROS 빌드·실제 마이크·실물 보정 사항은 현장 인수인계 문서에 기록했다.
+위 결과는 가상 장치·빌드 검증이다. 실제 마이크 인식, RealSense 스트림, 현장 TCP·카메라 보정 및
+실물 파지는 별도 확인이 필요하다. 이전 리포트의 Windows 실패·미검증 기록과 최신 Ubuntu/Jazzy
+검증 결과는 [최신 검증 리포트](docs/latest-validation-review.md)에서 구분해 확인한다.

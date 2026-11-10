@@ -1,0 +1,8 @@
+{
+  "fake_depth_tests": 3,
+  "median_ignores_outlier": true,
+  "edge_pixels_bounded": true,
+  "missing_depth_zero": true,
+  "real_realsense_stream_tested": false,
+  "world_height_calibration_tested": false
+}

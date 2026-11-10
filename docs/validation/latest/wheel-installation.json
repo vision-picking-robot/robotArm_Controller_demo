@@ -1,0 +1,5 @@
+{
+  "installed_assets": "<isolated-venv>/share/e0509-vision-picking-demo",
+  "mock_result": "completed",
+  "rfid_tags": 5
+}

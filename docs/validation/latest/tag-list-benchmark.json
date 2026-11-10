@@ -1,0 +1,9 @@
+{
+  "measurement": "local in-process HTTP including TestClient overhead; not robot latency",
+  "iterations": 100,
+  "tags": 5,
+  "connections_per_list_before": 5,
+  "connections_per_list_after": 1,
+  "median_ms": 2.02,
+  "p95_ms": 2.297
+}

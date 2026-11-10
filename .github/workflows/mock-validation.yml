@@ -1,0 +1,83 @@
+name: MOCK and Jazzy validation
+
+on:
+  push:
+    branches: [main, 'review/**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ubuntu-mock:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements.txt build
+      - name: Controller and RFID regressions (no hardware)
+        run: python -m pytest tests robot_rfid -q
+      - name: Complete web regression suite
+        working-directory: web
+        run: python -m pytest tests -q
+      - name: JavaScript behavior and preserved 17-stage order
+        run: node --test web/tests/*.test.cjs
+      - name: Native C++ packet and fragmented-response tests
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -pthread -I ros/warehouse_gripper/include ros/warehouse_gripper/test/test_protocol.cpp -o /tmp/gripper-protocol
+          /tmp/gripper-protocol
+          g++ -std=c++17 -Wall -Wextra -Werror -pthread -I ros/warehouse_gripper/include ros/warehouse_gripper/test/test_rtu_session.cpp -o /tmp/gripper-rtu
+          /tmp/gripper-rtu
+      - name: Build wheel and verify isolated installation
+        run: |
+          python -m build --wheel
+          python -m venv /tmp/picking-wheel
+          /tmp/picking-wheel/bin/pip install dist/*.whl
+          cd /tmp
+          /tmp/picking-wheel/bin/python -I -c "from vision_picking.server import create_app; a=create_app(); assert a.state.controller.mock_mode; assert a.state.controller.config['calibration']['revision']=='mock-only-v1'"
+
+  jazzy-build:
+    runs-on: ubuntu-24.04
+    container: ros:jazzy-ros-base
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          path: ros_ws/src/demo
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: DoosanRobotics/doosan-robot2
+          ref: dade65d3a99dd8b29d8eca3689a4ead74f228d77
+          path: ros_ws/src/doosan-robot2
+      - name: Install build dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends build-essential libpoco-dev libyaml-cpp-dev libboost-system-dev libboost-thread-dev python3-colcon-common-extensions ros-jazzy-controller-manager ros-jazzy-kdl-parser ros-jazzy-moveit-msgs ros-jazzy-joint-state-broadcaster
+      - name: Build pinned driver libraries (no bringup)
+        working-directory: ros_ws
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          colcon build --packages-select dsr_msgs2 dsr_common2 dsr_hardware2 --cmake-args -DBUILD_TESTING=OFF
+      - name: Build extracted gripper plugin
+        working-directory: ros_ws
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          source install/setup.bash
+          colcon build --packages-select warehouse_gripper --cmake-args -DBUILD_TESTING=ON
+      - name: Inspect linking and run fake-device tests
+        working-directory: ros_ws
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          source install/setup.bash
+          ldd -r install/warehouse_gripper/lib/libwarehouse_gripper.so | tee /tmp/gripper-link.txt
+          if grep -E 'not found|undefined symbol' /tmp/gripper-link.txt; then exit 1; fi
+          ros2 launch warehouse_gripper gripper.launch.py --show-args
+          colcon test --packages-select warehouse_gripper --return-code-on-test-failure --event-handlers console_direct+
+          colcon test-result --verbose

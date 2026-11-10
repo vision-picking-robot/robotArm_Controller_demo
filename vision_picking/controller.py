@@ -14,8 +14,8 @@ from .legacy.gripper_feedback import parse_feedback, wait_for_feedback
 from .legacy.safe_move import DR_BASE, MotionError, SafeMover
 from .pick_plane import Calibration, PickPlane
 from .store import DomainError
+from .paths import ROOT, state_directory
 
-ROOT = Path(__file__).resolve().parents[1]
 MOCK_MODE = True
 
 
@@ -31,7 +31,7 @@ class Controller:
         self.products = legacy.load_yaml(ROOT / 'config/products.yaml')['products']
         self.lock = threading.Lock()
         self.cancel = threading.Event()
-        self.journal = Path(journal or ROOT / 'state/jobs.sqlite3')
+        self.journal = Path(journal) if journal is not None else state_directory() / 'jobs.sqlite3'
         self.journal.parent.mkdir(parents=True, exist_ok=True)
         with self.db() as db:
             db.execute('CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, digest TEXT, detection TEXT UNIQUE, result TEXT)')

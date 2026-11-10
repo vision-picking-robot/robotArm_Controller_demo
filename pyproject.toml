@@ -6,10 +6,17 @@ build-backend = "setuptools.build_meta"
 name = "e0509-vision-picking-demo"
 version = "0.1.0"
 requires-python = ">=3.11"
-dependencies = ["fastapi>=0.115,<1", "pydantic>=2.9,<3", "uvicorn>=0.30,<1", "PyYAML>=6,<7"]
+dependencies = ["fastapi>=0.115,<1", "pydantic>=2.9,<3", "uvicorn>=0.30,<1", "PyYAML>=6,<7", "httpx>=0.27,<1"]
 
 [tool.setuptools.packages.find]
 include = ["vision_picking*", "robot_rfid*"]
+
+[tool.setuptools.data-files]
+"share/e0509-vision-picking-demo/config" = [
+  "config/integration.json", "config/hardware.example.json",
+  "config/poses.yaml", "config/products.yaml",
+  "config/payload.example.json", "config/payload.schema.json",
+]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
