@@ -155,6 +155,10 @@ Web Speech API의 `ko-KR` 전사를 기존 packing 처리기로 전달한다. Ch
 
 ## 문서·검증
 
+최신 커밋의 검증·최적화 결과는 [최신 검증 리포트](docs/latest-validation-review.md)에 있다.
+수정은 `review/5baa41d-validation` 브랜치에서 검토할 수 있으며, Ubuntu 24.04 전체 회귀와
+ROS 2 Jazzy 드라이버/그리퍼 빌드 결과를 포함한다.
+
 - [OS/ROS 확정: Ubuntu 24.04 / ROS 2 Jazzy](docs/01-environment-report.md)
 - [통신·웨이포인트·좌표 변환·그리퍼 결함 명세](docs/02-legacy-assets.md)
 - [Web Speech API·페이로드·웹 연결 계약](docs/03-pipeline-and-speech.md)

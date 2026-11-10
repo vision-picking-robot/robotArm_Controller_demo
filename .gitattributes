@@ -1,0 +1,3 @@
+# Preserve the exact upstream patch payload, including context-line whitespace.
+web/rosbridge/*.patch -whitespace
+web/rosbridge/host-sdk/*.patch -whitespace
