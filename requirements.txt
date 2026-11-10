@@ -1,0 +1,8 @@
+-e .
+websockets>=14,<18
+httpx>=0.27,<1
+numpy>=1.26,<3
+Pillow>=10,<13
+opencv-python>=4.10,<5
+psutil>=7,<8
+pytest>=8,<10

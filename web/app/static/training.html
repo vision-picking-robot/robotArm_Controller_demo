@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>모델 관리 · Vision Lab</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/model-manager.css">
+  <link rel="stylesheet" href="/static/dataset-picker.css">
+  <link rel="stylesheet" href="/static/station-shell.css">
+  <script type="module" src="/static/station-nav.js"></script>
+  <script src="/static/app.js" defer></script>
+  <script src="/static/model-manager.js" defer></script>
+  <script src="/static/dataset-picker.js" defer></script>
+  <script src="/static/training.js" defer></script>
+</head>
+<body class="station-shell" data-workspace="training">
+  <aside class="station-rail" id="station-rail"></aside>
+  <main>
+    <header>
+      <h1><b>모델 관리</b><span>YOLOv8</span></h1>
+      <div class="status" id="status-pill"><i></i><span id="state" role="status">서버 연결 중</span></div>
+    </header>
+    <aside id="training-product" class="product-context" hidden>
+      <div><strong id="training-product-name"></strong>
+        <p>상품 사진을 수집하고, 유지할 기존 클래스와 새 클래스를 함께 포함한 데이터셋으로 학습하세요. 새 모델을 적용한 뒤 재고에서 클래스를 연결하세요.</p></div>
+      <a id="training-product-return" href="/#stock">재고에서 클래스 연결</a>
+    </aside>
+    <p class="intro" id="live-intro">실시간 객체 탐지 결과와 카메라 성능을 확인합니다.</p>
+    <nav class="tabs" id="training-tabs" aria-label="모델 학습 메뉴">
+      <a href="#live" data-tab="live">실시간 객체 탐지</a>
+      <a href="#collect" data-tab="collect">학습 데이터 수집</a>
+      <a href="#jobs" data-tab="jobs">학습 작업</a>
+      <a href="#models" data-tab="models">모델 관리</a>
+    </nav>
+    <p id="action-message" role="status" hidden></p>
+    <div id="live-controls"><div class="controls"><label>현재 백엔드의 모델 <select id="live-model"></select></label><button id="activate-model">모델 적용</button><button id="camera-on">카메라 켜기</button><button class="secondary" id="camera-off">카메라 끄기</button><span id="active-version"></span></div>
+    <p class="hint">모델 적용과 카메라 제어는 이 서버에 연결된 모든 화면에 적용됩니다. 백엔드는 서버 재시작으로 변경합니다.</p>
+    </div>
+    <section id="collect-controls" class="tab-page" hidden>
+      <h2>중앙 물체 촬영</h2><p>사진 수집을 시작하면 현재 모델이 탐지한 물체를 저장합니다. 중앙에 물체 하나를 놓고 각도·배경을 바꿔 수집하세요.</p>
+      <div class="form-grid">
+        <label>라벨 클래스<select id="class-select"></select></label><label>새 클래스 이름<input id="class-name" maxlength="80" placeholder="예: 내 보온병"></label><button id="add-class">클래스 등록</button>
+        <label>촬영 환경 그룹<select id="group-select"></select></label><label>새 환경 이름<input id="group-name" maxlength="80" placeholder="예: 창가 · 오전 · 책상"></label><button id="add-group">새 환경 등록</button>
+        <label>수집 모델<select id="teacher-model"></select></label><label>저장 간격 (ms)<input id="interval" type="number" min="100" max="2000" value="250"></label><label>최소 confidence<input id="collection-conf" type="number" min="0.01" max="0.99" step="0.05" value="0.50"></label>
+      </div>
+      <p class="hint">같은 환경에서 중지·재시작할 때는 기존 그룹을 재사용하세요. 독립된 배경·조명·각도로 바꾼 경우에만 새 환경을 등록하세요.</p>
+      <div class="controls"><button id="collect-start">사진 수집 시작</button><button id="collect-stop" class="danger">사진 저장 중지</button><strong id="collection-state" role="status">사진 저장 중지</strong></div>
+      <p id="collection-counts" class="hint"></p>
+    </section>
+    <div id="vision">
+    <section class="metrics" aria-label="실시간 성능">
+      <article><span>추론 백엔드</span><strong id="backend">—</strong><small id="model">모델 준비 중</small></article>
+      <article><span>탐지 속도</span><strong><b id="fps">—</b><em> FPS</em></strong><small id="capture-fps">카메라 — / 미리보기 —</small></article>
+      <article><span>서버 지연 p95</span><strong><b id="latency">—</b><em> ms</em></strong><small>수신부터 결과 게시까지</small></article>
+      <article><span>현재 탐지 객체</span><strong id="count">—</strong><small id="frame-id">프레임 대기 중</small></article>
+    </section>
+    <section class="workspace">
+      <article class="camera-panel">
+        <div class="panel-title"><h2>카메라</h2><span id="resolution">입력 대기 중</span></div>
+        <div class="viewport">
+          <div id="center-roi" hidden><span>중앙에 물체 하나</span></div>
+          <div id="candidate-box" hidden></div>
+          <img id="preview" alt="객체 탐지 박스가 포함된 카메라 영상" hidden>
+          <div id="placeholder"><div class="camera-icon">◎</div><h3 id="placeholder-title">카메라를 준비하고 있습니다</h3><p id="placeholder-detail">모델이 로드되면 영상이 표시됩니다.</p></div>
+        </div>
+        <footer><span id="frame-age">결과 수신 대기</span><span id="drops">생략한 입력 0</span></footer>
+      </article>
+      <aside class="objects-panel">
+        <div class="panel-title"><h2>탐지 결과</h2><span class="tag">LIVE</span></div>
+        <p class="list-note">객체 목록은 최신 탐지 결과로 갱신됩니다.</p>
+        <ul id="objects"><li class="empty">탐지 결과를 기다리고 있습니다.</li></ul>
+      </aside>
+    </section>
+    <p id="error" class="error" role="alert" hidden></p>
+    </div>
+    <section id="review-page" class="tab-page" hidden>
+      <h2>데이터 검토</h2><p>자동 박스가 물체 전체를 정확히 감싸는 사진만 승인하세요. 유사 묶음은 검토 보조 정보이며 자동 삭제하지 않습니다.</p>
+      <div class="controls"><label>촬영 세션<select id="review-session"></select></label><button id="load-samples">사진 불러오기</button><button id="select-samples">전체 선택 / 해제</button><button id="approve-samples">선택 승인</button><button class="secondary" id="exclude-samples">선택 제외</button></div>
+      <p id="review-summary"></p><div id="samples" class="samples"></div>
+      <div class="controls"><button id="build-dataset">누적 승인 자료로 데이터셋 고정</button><span class="hint">한 환경의 승인 사진도 데이터셋으로 저장할 수 있습니다. 학습하려면 각 클래스에 독립 검증 자료가 필요합니다.</span></div>
+    </section>
+    <section id="jobs-page" class="tab-page" hidden>
+      <h2>학습 작업</h2><p>학습·평가·변환 동안 카메라를 해제합니다. 완료 후 이전 모델로 탐지를 재개하며 사진 저장은 재개하지 않습니다.</p>
+      <section class="dataset-selection" aria-labelledby="dataset-heading">
+        <div class="ds-row"><h3 id="dataset-heading">학습 데이터셋</h3><button id="dataset-open" aria-haspopup="dialog">데이터셋 선택</button></div>
+        <div id="dataset-selection-info" hidden>
+          <strong id="dataset-selected-title"></strong><p id="dataset-selected-meta" class="hint"></p>
+          <h4>학습 후 모델의 인식 클래스 <small id="dataset-selected-count"></small></h4>
+          <div id="dataset-selected-classes" class="ds-chips"></div>
+        </div>
+        <p id="dataset-note" class="hint" aria-live="polite">학습에 사용할 고정 데이터셋을 선택하세요.</p>
+      </section>
+      <dialog id="dataset-dialog" aria-labelledby="ds-title" aria-describedby="ds-description">
+        <div class="ds-row ds-head">
+          <div><h2 id="ds-title">학습 데이터셋 선택</h2><p id="ds-description">사진 구성과 클래스별 학습·검증 자료를 확인하세요.</p></div>
+          <button id="ds-close" class="secondary" aria-label="닫기">×</button>
+        </div>
+        <div class="ds-body">
+          <aside class="ds-library">
+            <h3>고정된 데이터셋 <small id="ds-count"></small></h3>
+            <input id="ds-search" type="search" aria-label="클래스명 또는 데이터셋 ID 검색" placeholder="클래스명 또는 ID 검색" autofocus>
+            <nav id="ds-list" aria-label="데이터셋 목록"></nav>
+          </aside>
+          <section class="ds-detail" aria-label="검토 중인 데이터셋">
+            <div id="ds-feedback" role="status"></div><button type="button" id="ds-retry" class="secondary" hidden>다시 시도</button>
+            <div id="ds-profile" hidden>
+              <div class="ds-row"><h3 id="ds-name"></h3><span id="ds-state"></span></div><p id="ds-date" class="hint"></p>
+              <dl class="ds-metrics"><div><dt>전체 사진</dt><dd id="ds-total"></dd></div><div><dt>촬영 환경</dt><dd id="ds-groups"></dd></div><div><dt>인식 클래스</dt><dd id="ds-class-count"></dd></div></dl>
+              <h4>사진 분할</h4><div class="ds-bar" aria-hidden="true"><span id="ds-train-bar"></span></div>
+              <div class="ds-row ds-legend"><span id="ds-train"></span><span id="ds-val"></span></div>
+              <h4>학습 후 모델의 인식 클래스</h4>
+              <table aria-label="클래스별 사진 수"><thead><tr><th scope="col">ID</th><th scope="col">클래스</th><th scope="col">학습</th><th scope="col">검증</th></tr></thead><tbody id="ds-rows"></tbody></table>
+              <p id="ds-warning" class="ds-warning" hidden></p>
+              <details id="ds-id-details"><summary>데이터셋 ID 확인</summary><code id="ds-id"></code></details>
+            </div>
+          </section>
+        </div>
+        <div class="ds-row ds-foot"><span id="ds-candidate"></span><div><button id="ds-cancel" class="secondary">취소</button> <button id="ds-confirm" disabled>이 데이터셋 선택</button></div></div>
+      </dialog>
+      <div class="form-grid"><label>초기 가중치<select id="initial-model"><option value="">YOLOv8n 사전 학습 가중치</option></select></label><label>Batch<input id="train-batch" type="number" value="4" min="1" max="16"></label><label>최대 epochs<input id="train-epochs" type="number" value="50" min="1" max="300"></label><label>Patience<input id="train-patience" type="number" value="10" min="1" max="100"></label><button id="train-start" disabled aria-describedby="dataset-note">새 버전 학습 시작</button></div>
+      <p class="hint">MPS · 640 × 640 · workers 0 · RAM cache 끔. 메모리 부족 시 batch를 줄여 새 작업으로 재시도하세요.</p>
+      <div id="jobs-list" class="record-list"></div><pre id="job-log" hidden></pre>
+    </section>
+    <section id="models-page" hidden aria-labelledby="registry-heading">
+      <div class="registry-bar"><h2 id="registry-heading">모델 관리</h2><span id="registry-active" class="registry-active"></span></div>
+      <div class="registry-grid">
+        <aside class="registry-panel library"><h3>보관된 모델 <small id="registry-count"></small></h3><nav id="models-list" aria-label="보관된 모델 버전"></nav></aside>
+        <article class="registry-panel profile" id="model-profile" hidden>
+          <div class="registry-row profile-title"><div><small id="model-kind"></small><h3><span id="model-name"></span> <span id="model-version" class="registry-version"></span></h3></div><button class="secondary" id="rename-model">이름 변경</button></div>
+          <dl class="registry-facts"><div><dt>생성일 · KST</dt><dd id="model-date"></dd></div><div><dt>기반 모델 · 초기 가중치</dt><dd id="model-parent"></dd></div><div><dt>아키텍처</dt><dd id="model-architecture"></dd></div></dl>
+          <section><div class="registry-row"><h4>인식 클래스 <small id="class-count"></small></h4><input id="class-search" type="search" aria-label="클래스 이름 또는 ID" placeholder="클래스 이름 또는 ID" hidden></div><div id="model-classes" class="registry-chips"></div></section>
+          <section><h4>실행 형식과 성능</h4><div class="registry-scroll"><table><thead><tr><th>실행 형식</th><th>사용 상태</th><th>mAP50–95</th><th>추론 p95</th></tr></thead><tbody id="model-formats"></tbody></table></div><p class="hint" id="model-evaluation"></p></section>
+          <details id="model-history"><summary>학습 이력 및 파일 정보</summary><dl id="model-metadata"></dl></details>
+          <div class="registry-row registry-actions"><span>모델 적용은 연결된 모든 화면에 반영됩니다.</span><button id="use-version"></button></div>
+        </article>
+      </div>
+      <dialog id="model-dialog" aria-labelledby="model-dialog-title"><form id="model-form">
+        <h3 id="model-dialog-title"></h3><p id="model-dialog-note"></p>
+        <label id="model-name-field">표시 이름<input id="model-new-name" autocomplete="off" aria-describedby="model-form-error"></label>
+        <p id="model-form-error" role="alert"></p><div class="registry-dialog-actions"><button type="button" class="secondary" id="cancel-model-change">취소</button><button type="submit" id="submit-model-change"></button></div>
+      </form></dialog>
+    </section>
+    <details class="settings"><summary>실행 설정</summary><p id="settings-values">설정을 불러오는 중입니다.</p><small>현재 실행값입니다. 설정 변경은 서버 재시작 후 적용됩니다.</small></details>
+    <div class="bottom"><span>최신 프레임 우선 처리 · 단일 카메라</span><a href="/docs" target="_blank" rel="noopener">API 문서 ↗</a></div>
+  </main>
+</body>
+</html>

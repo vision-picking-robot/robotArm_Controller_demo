@@ -1,0 +1,92 @@
+{
+  "mock_mode": false,
+  "namespace": "dsr01",
+  "robot_ip": "110.120.1.56",
+  "robot_port": 12345,
+  "calibration_verified": false,
+  "tcp_verified": false,
+  "waypoints_verified": false,
+  "gripper_verified": false,
+  "workspace_verified": false,
+  "calibration": {
+    "camera": null,
+    "region": "legacy",
+    "revision": null,
+    "corners": []
+  },
+  "min_confidence": 0.6,
+  "workspace_mm": {
+    "min": [
+      -650.0,
+      -650.0,
+      10.0
+    ],
+    "max": [
+      650.0,
+      650.0,
+      600.0
+    ]
+  },
+  "class_map": {
+    "snack_box": "snack_box",
+    "snack_pepero": "snack_pepero",
+    "beverage_pet": "beverage_pet",
+    "pet_bottle": "pet_bottle",
+    "can": "can",
+    "canned_meat": "canned_meat",
+    "wet_tissue": "wet_tissue",
+    "wet_wipes": "wet_wipes"
+  },
+  "grasp_feedback": {
+    "snack_box": {
+      "calibrated": false,
+      "min_position_pulses": 100,
+      "max_position_pulses": 600,
+      "min_current": 100
+    },
+    "snack_pepero": {
+      "calibrated": false,
+      "min_position_pulses": 100,
+      "max_position_pulses": 600,
+      "min_current": 100
+    },
+    "beverage_pet": {
+      "calibrated": false,
+      "min_position_pulses": 100,
+      "max_position_pulses": 600,
+      "min_current": 100
+    },
+    "pet_bottle": {
+      "calibrated": false,
+      "min_position_pulses": 100,
+      "max_position_pulses": 600,
+      "min_current": 100
+    },
+    "can": {
+      "calibrated": false,
+      "min_position_pulses": 100,
+      "max_position_pulses": 600,
+      "min_current": 100
+    },
+    "canned_meat": {
+      "calibrated": false,
+      "min_position_pulses": 100,
+      "max_position_pulses": 600,
+      "min_current": 100
+    },
+    "wet_tissue": {
+      "calibrated": false,
+      "min_position_pulses": 100,
+      "max_position_pulses": 600,
+      "min_current": 100
+    },
+    "wet_wipes": {
+      "calibrated": false,
+      "min_position_pulses": 100,
+      "max_position_pulses": 600,
+      "min_current": 100
+    }
+  },
+  "api_port": 8011,
+  "_note": "Unconfigured real template. Replace calibration, measured grasp feedback and verified flags before execution. DRFL 12345; notebook HTTP 8011."
+}

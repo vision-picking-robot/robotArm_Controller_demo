@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>warehouse_gripper</name>
+  <version>0.1.0</version>
+  <description>ROS 2 controller for a flange-connected RH-P12-RN-A gripper</description>
+  <maintainer email="skdms8827@s3i.co.kr">naeun</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>controller_interface</depend>
+  <depend>dsr_common2</depend>
+  <depend>dsr_hardware2</depend>
+  <depend>pluginlib</depend>
+  <depend>rclcpp</depend>
+  <depend>std_srvs</depend>
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

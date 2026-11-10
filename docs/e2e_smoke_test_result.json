@@ -1,0 +1,297 @@
+{
+  "timestamp": "2026-11-10T10:47:03.156792",
+  "tasks": {
+    "task1": {
+      "status": "SUCCESS",
+      "checks": [
+        {
+          "name": "Dashboard Title",
+          "status": "PASS",
+          "value": "대시보드 · Vision Lab"
+        },
+        {
+          "name": "Live Camera Panel",
+          "status": "PASS",
+          "heading": "탐지 카메라"
+        },
+        {
+          "name": "Metrics Monitor (FPS/Latency/Count)",
+          "status": "PASS"
+        },
+        {
+          "name": "Order Status Monitor (#123)",
+          "status": "PASS",
+          "preview": "\n    #123일시정지\n      홍길동 · RFID E2-34-08-"
+        },
+        {
+          "name": "Start/Stop Control Button",
+          "status": "PASS",
+          "button_text": "작업 재개"
+        },
+        {
+          "name": "Place Simulation Button",
+          "status": "PASS",
+          "text": "놓기 완료 시연"
+        },
+        {
+          "name": "Voice Command Panel (Wake/Stop)",
+          "status": "PASS"
+        },
+        {
+          "name": "Emergency Stop & Standby Rail Controls",
+          "status": "PASS"
+        }
+      ],
+      "screenshot": "C:\\Users\\SCPOINT\\.gemini\\antigravity\\brain\\3866c29c-1238-400b-b574-6a57d0ee8e9c\\dashboard_baseline.png"
+    },
+    "task2": {
+      "status": "SUCCESS",
+      "voice_tests": [
+        {
+          "spoken_word": "시작",
+          "expected_intent": "cmd-go",
+          "server_reply": "123번 주문의 피킹을 재개합니다.",
+          "status": "PASS"
+        },
+        {
+          "spoken_word": "정지",
+          "expected_intent": "cmd-stop",
+          "server_reply": "123번 주문의 피킹을 정지했습니다.",
+          "status": "PASS"
+        },
+        {
+          "spoken_word": "집어",
+          "expected_intent": "cmd-pick",
+          "server_reply": "123번 주문의 빼빼로 상품을 집어(피킹) 작업을 시작합니다.",
+          "status": "PASS"
+        }
+      ],
+      "pipeline_steps": [
+        {
+          "step": "1_YOLO_DETECTION",
+          "object": "snack_box",
+          "bbox": [
+            150.0,
+            120.0,
+            350.0,
+            400.0
+          ],
+          "center_pixel": [
+            250.0,
+            260.0
+          ],
+          "status": "PASS"
+        },
+        {
+          "step": "2_COORDINATE_TRANSFORMATION",
+          "pixel": [
+            250.0,
+            260.0
+          ],
+          "robot_base_xyz_mm": [
+            427.78,
+            -66.67,
+            20.0
+          ],
+          "status": "PASS"
+        },
+        {
+          "step": "3_DEMO_CONTROLLER_EXECUTION",
+          "product_id": "snack_box",
+          "slot_id": 1,
+          "commands_count": 9,
+          "trace_count": 15,
+          "grasp_pose": [
+            427.77777777777777,
+            -66.66666666666669,
+            120.0,
+            0.0,
+            180.0,
+            0.0
+          ],
+          "slot_pose": [
+            -373.0,
+            0.0,
+            85.0,
+            3.26,
+            180.0,
+            -176.74
+          ],
+          "status": "PASS"
+        }
+      ],
+      "controller_trace": [
+        {
+          "sequence": 1,
+          "timestamp": "2026-11-10T10:47:05.713",
+          "phase": "SEQUENCE_START",
+          "request_id": "E2E-SMOKE-REQ-001",
+          "product_id": "snack_box",
+          "base_xy": [
+            427.77777777777777,
+            -66.66666666666669
+          ],
+          "slot_id": 1
+        },
+        {
+          "sequence": 2,
+          "timestamp": "2026-11-10T10:47:05.713",
+          "phase": "VERIFY_HOME",
+          "pose": [
+            373.0,
+            0.0,
+            285.0,
+            12.44,
+            180.0,
+            12.44
+          ]
+        },
+        {
+          "sequence": 3,
+          "timestamp": "2026-11-10T10:47:05.764",
+          "phase": "GRIPPER_PREPARE_OPEN",
+          "open_width_mm": 80
+        },
+        {
+          "sequence": 4,
+          "timestamp": "2026-11-10T10:47:06.065",
+          "phase": "MOVE_APPROACH",
+          "pose": [
+            427.77777777777777,
+            -66.66666666666669,
+            270.0,
+            0.0,
+            180.0,
+            0.0
+          ]
+        },
+        {
+          "sequence": 5,
+          "timestamp": "2026-11-10T10:47:06.115",
+          "phase": "MOVE_DESCENT",
+          "pose": [
+            427.77777777777777,
+            -66.66666666666669,
+            120.0,
+            0.0,
+            180.0,
+            0.0
+          ],
+          "grasp_z": 120.0,
+          "floor_limit": 10.0
+        },
+        {
+          "sequence": 6,
+          "timestamp": "2026-11-10T10:47:06.166",
+          "phase": "GRIP_ACTION",
+          "target_width_mm": 20
+        },
+        {
+          "sequence": 7,
+          "timestamp": "2026-11-10T10:47:06.567",
+          "phase": "GRIP_CONFIRMED",
+          "grip_result": {
+            "state": "closed",
+            "position": 525,
+            "current_ma": 65,
+            "contact": true,
+            "width_mm": 20
+          }
+        },
+        {
+          "sequence": 8,
+          "timestamp": "2026-11-10T10:47:06.567",
+          "phase": "MOVE_LIFT",
+          "pose": [
+            427.77777777777777,
+            -66.66666666666669,
+            270.0,
+            0.0,
+            180.0,
+            0.0
+          ]
+        },
+        {
+          "sequence": 9,
+          "timestamp": "2026-11-10T10:47:06.617",
+          "phase": "MOVE_VIA_POINT",
+          "pose": [
+            0.0,
+            373.0,
+            285.0,
+            135.0,
+            180.0,
+            45.0
+          ]
+        },
+        {
+          "sequence": 10,
+          "timestamp": "2026-11-10T10:47:06.668",
+          "phase": "MOVE_BOX_APPROACH",
+          "slot_id": 1,
+          "pose": [
+            -373.0,
+            0.0,
+            235.0,
+            3.26,
+            180.0,
+            -176.74
+          ]
+        },
+        {
+          "sequence": 11,
+          "timestamp": "2026-11-10T10:47:06.719",
+          "phase": "MOVE_BOX_PLACE",
+          "slot_id": 1,
+          "pose": [
+            -373.0,
+            0.0,
+            85.0,
+            3.26,
+            180.0,
+            -176.74
+          ]
+        },
+        {
+          "sequence": 12,
+          "timestamp": "2026-11-10T10:47:06.770",
+          "phase": "RELEASE_GRIPPER",
+          "slot_id": 1
+        },
+        {
+          "sequence": 13,
+          "timestamp": "2026-11-10T10:47:07.070",
+          "phase": "MOVE_BOX_RETRACT",
+          "pose": [
+            -373.0,
+            0.0,
+            235.0,
+            3.26,
+            180.0,
+            -176.74
+          ]
+        },
+        {
+          "sequence": 14,
+          "timestamp": "2026-11-10T10:47:07.121",
+          "phase": "MOVE_RETURN_HOME",
+          "pose": [
+            373.0,
+            0.0,
+            285.0,
+            12.44,
+            180.0,
+            12.44
+          ]
+        },
+        {
+          "sequence": 15,
+          "timestamp": "2026-11-10T10:47:07.172",
+          "phase": "SEQUENCE_COMPLETED",
+          "status": "SUCCESS",
+          "request_id": "E2E-SMOKE-REQ-001"
+        }
+      ]
+    }
+  }
+}

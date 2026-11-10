@@ -1,0 +1,107 @@
+[
+  {
+    "source": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+    "destination": "vision_picking/legacy/safe_move.py",
+    "sha256": "2430f820adc50f12767b3af7ae63970b0442afb5b3576bdc332bcaf8d21fa653"
+  },
+  {
+    "source": "robotArm_Controller/warehouse_motion/warehouse_motion/validation.py",
+    "destination": "vision_picking/legacy/validation.py",
+    "sha256": "5ff6d697cee1f9daf509a25054a766621b2db0f14bf7482362b4ae43b866c57a"
+  },
+  {
+    "source": "robotArm_Controller/warehouse_motion/warehouse_motion/config_loader.py",
+    "destination": "vision_picking/legacy/config_loader.py",
+    "sha256": "df87360f6cdf74723829d499cb07ed144f0a907038030ef873153430f750067c"
+  },
+  {
+    "source": "robotArm_Controller/warehouse_motion/warehouse_motion/ros_motion_backend.py",
+    "destination": "vision_picking/legacy/ros_motion_backend.py",
+    "sha256": "1cdbb3a69fc29aed2a199a96923e10d88ef20f06416622de09320f1dc1739af9"
+  },
+  {
+    "source": "robotArm_Controller/warehouse_motion/warehouse_motion/ros_calls.py",
+    "destination": "vision_picking/legacy/ros_calls.py",
+    "sha256": "2d75db17e745b75fcf0c2de475b8d6329997024299013159fa3ab9ac63b0a38c"
+  },
+  {
+    "source": "robotArm_Controller/warehouse_motion/warehouse_motion/gripper_feedback.py",
+    "destination": "vision_picking/legacy/gripper_feedback.py",
+    "sha256": "1c05dc983f96a4f92064f13a9b53c4ee2d7f3bf5ad498316ea61604a52867fb5"
+  },
+  {
+    "source": "ryankim8815_yolov8/app/pick_plane.py",
+    "destination": "vision_picking/pick_plane.py",
+    "sha256": "f1a826d58fcb3eff79903f6a354ad125ef02bebfd2410c86cdb880e1dd64faf5"
+  },
+  {
+    "source": "robotArm_Controller/warehouse_motion/config/poses.yaml",
+    "destination": "config/poses.yaml",
+    "sha256": "6c8225d0923056501080ced23795b1011b099c1856fb8dd07d21ac89bfc1aa6f"
+  },
+  {
+    "source": "robotArm_Controller/warehouse_motion/config/products.yaml",
+    "destination": "config/products.yaml",
+    "sha256": "740141282b612696200a48c7f85d692e399a495d7fb43b34feb457585bd86cc6"
+  },
+  {
+    "source": "robotArm_Controller/warehouse_gripper/CMakeLists.txt",
+    "destination": "ros/warehouse_gripper/CMakeLists.txt",
+    "sha256": "9b9b77ffce4b3c341d4f09979971e221b3f8a5237c5736399f7436c8877b4a30"
+  },
+  {
+    "source": "robotArm_Controller/warehouse_gripper/gripper_plugin.xml",
+    "destination": "ros/warehouse_gripper/gripper_plugin.xml",
+    "sha256": "d2cc4927857812a485845ba4322ca3c0c0b2afdf14fe945c81113a534a5e79c9"
+  },
+  {
+    "source": "robotArm_Controller/warehouse_gripper/package.xml",
+    "destination": "ros/warehouse_gripper/package.xml",
+    "sha256": "945a41acfe8a3dd8e874cf9144c6177f1ba513fc01666a58ef28b2c4ad5b459a"
+  },
+  {
+    "source": "robotArm_Controller/warehouse_gripper/README.md",
+    "destination": "ros/warehouse_gripper/README.md",
+    "sha256": "f45842521f7e563516379eb1d25c10007b38553b24607082a3fac927792359a5"
+  },
+  {
+    "source": "robotArm_Controller/warehouse_gripper/config/gripper.yaml",
+    "destination": "ros/warehouse_gripper/config/gripper.yaml",
+    "sha256": "5e8339eac9e9121175e9c418609947f741584f2bdda654145a5bafbd0b75b67a"
+  },
+  {
+    "source": "robotArm_Controller/warehouse_gripper/launch/gripper.launch.py",
+    "destination": "ros/warehouse_gripper/launch/gripper.launch.py",
+    "sha256": "1aaa61e5d59c81f96d1da4c33022db1a92b6a4ed2ca3482bf790f03a644d8cf0"
+  },
+  {
+    "source": "robotArm_Controller/warehouse_gripper/src/gripper_controller.cpp",
+    "destination": "ros/warehouse_gripper/src/gripper_controller.cpp",
+    "sha256": "29dd3dea7e8881184db12207d71ba26c6a23a979385917f08bc63ac7a4682da4"
+  },
+  {
+    "source": "robotArm_Controller/warehouse_gripper/test/test_protocol.cpp",
+    "destination": "ros/warehouse_gripper/test/test_protocol.cpp",
+    "sha256": "9dcc31b1a4345cf3b15455a279edb85d8713228615afe4e9a4a7022a7ae009e7"
+  },
+  {
+    "source": "robotArm_Controller/warehouse_gripper/test/test_rtu_session.cpp",
+    "destination": "ros/warehouse_gripper/test/test_rtu_session.cpp",
+    "sha256": "2bb674144b14d0e7acf858dcb056ff72141e09c68bfa2458d84d1f6fb3e311b1"
+  },
+  {
+    "source": "robotArm_Controller/warehouse_gripper/include/warehouse_gripper/flange_serial.hpp",
+    "destination": "ros/warehouse_gripper/include/warehouse_gripper/flange_serial.hpp",
+    "sha256": "66c4975766c76fb4ab245a2191939c70ee0adcb7535fcf41032ae87e4612438c"
+  },
+  {
+    "source": "robotArm_Controller/warehouse_gripper/include/warehouse_gripper/modbus.hpp",
+    "destination": "ros/warehouse_gripper/include/warehouse_gripper/modbus.hpp",
+    "sha256": "5514a5d92844c1c908335979bbe2ee30563dc2e95c4623ede05fd7aed929972f"
+  },
+  {
+    "source": "robotArm_Controller/warehouse_gripper/include/warehouse_gripper/rtu_session.hpp",
+    "destination": "ros/warehouse_gripper/include/warehouse_gripper/rtu_session.hpp",
+    "sha256": "b46ead97f64584c8dd436d31152855af25731f55c2bbecd92b22b42246ff81f6"
+  }
+]

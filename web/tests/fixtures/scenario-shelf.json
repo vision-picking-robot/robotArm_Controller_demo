@@ -1,0 +1,566 @@
+{
+  "simulation_only": true,
+  "example": true,
+  "region": "shelf",
+  "product": {
+    "center_base_mm": [
+      -450.0,
+      0.0,
+      450
+    ],
+    "size_mm": [
+      40.0,
+      40.0,
+      40.0
+    ]
+  },
+  "pose": [
+    -450.0,
+    0.0,
+    450,
+    180,
+    90,
+    90
+  ],
+  "approach": [
+    -350.0,
+    0.0,
+    450.0,
+    180,
+    90,
+    90
+  ],
+  "config": {
+    "revision": null,
+    "standby_joints": [
+      0.0,
+      0.0,
+      90.0,
+      0.0,
+      90.0,
+      0.0
+    ],
+    "standby_opening_mm": 80,
+    "waypoint1_joints": [
+      -180,
+      0,
+      60,
+      0,
+      120,
+      0
+    ],
+    "turn_degrees": 180,
+    "box_clearance_mm": 200,
+    "approaches": {
+      "floor": {
+        "distance_mm": 100,
+        "reverse": false
+      },
+      "shelf": {
+        "distance_mm": 100,
+        "reverse": false
+      }
+    },
+    "profiles": {
+      "high": {
+        "joint": {
+          "speed": 10.0,
+          "acceleration": 10.0
+        },
+        "line": {
+          "speed": 10.0,
+          "acceleration": 10.0
+        },
+        "gripper": {
+          "speed": 10.0,
+          "acceleration": 3000.0
+        }
+      },
+      "medium": {
+        "joint": {
+          "speed": 7.5,
+          "acceleration": 7.5
+        },
+        "line": {
+          "speed": 7.5,
+          "acceleration": 7.5
+        },
+        "gripper": {
+          "speed": 5.0,
+          "acceleration": 3000.0
+        }
+      },
+      "low": {
+        "joint": {
+          "speed": 5.0,
+          "acceleration": 5.0
+        },
+        "line": {
+          "speed": 5.0,
+          "acceleration": 5.0
+        },
+        "gripper": {
+          "speed": 2.0,
+          "acceleration": 3000.0
+        }
+      }
+    },
+    "stages": {
+      "1": {
+        "profile": "high",
+        "override": null,
+        "motion": null,
+        "via_pose": null
+      },
+      "3": {
+        "profile": "high",
+        "override": null,
+        "motion": null,
+        "via_pose": null
+      },
+      "4": {
+        "profile": "high",
+        "override": null,
+        "motion": null,
+        "via_pose": null
+      },
+      "5": {
+        "profile": "low",
+        "override": null,
+        "motion": null,
+        "via_pose": null
+      },
+      "6": {
+        "profile": "low",
+        "override": null,
+        "motion": null,
+        "via_pose": null
+      },
+      "7": {
+        "profile": "low",
+        "override": null,
+        "motion": null,
+        "via_pose": null
+      },
+      "8": {
+        "profile": "high",
+        "override": null,
+        "motion": null,
+        "via_pose": [
+          -421.975537,
+          0.000449,
+          290.654122,
+          44.999991,
+          179.999802,
+          0
+        ]
+      },
+      "9": {
+        "profile": "high",
+        "override": null,
+        "motion": null,
+        "via_pose": null
+      },
+      "10": {
+        "profile": "high",
+        "override": null,
+        "motion": null,
+        "via_pose": null
+      },
+      "11": {
+        "profile": "low",
+        "override": null,
+        "motion": null,
+        "via_pose": null
+      },
+      "12": {
+        "profile": "low",
+        "override": null,
+        "motion": null,
+        "via_pose": null
+      },
+      "13": {
+        "profile": "low",
+        "override": null,
+        "motion": null,
+        "via_pose": null
+      },
+      "14": {
+        "profile": "high",
+        "override": null,
+        "motion": null,
+        "via_pose": null
+      },
+      "15": {
+        "profile": "high",
+        "override": null,
+        "motion": null,
+        "via_pose": null
+      },
+      "16": {
+        "profile": "high",
+        "override": null,
+        "motion": null,
+        "via_pose": null
+      },
+      "17": {
+        "profile": "high",
+        "override": null,
+        "motion": null,
+        "via_pose": null
+      }
+    },
+    "virtual": {
+      "floor": {
+        "center_base_mm": [
+          -450.0,
+          0.0,
+          20.0
+        ],
+        "size_mm": [
+          40.0,
+          40.0,
+          40.0
+        ]
+      },
+      "shelf": {
+        "center_base_mm": [
+          -450.0,
+          0.0,
+          450
+        ],
+        "size_mm": [
+          40.0,
+          40.0,
+          40.0
+        ]
+      }
+    }
+  },
+  "box": {
+    "size_mm": [
+      400,
+      300,
+      250
+    ],
+    "center_base_mm": [
+      450,
+      0,
+      0
+    ]
+  },
+  "box_pose": [
+    450,
+    0,
+    120,
+    0,
+    180,
+    0
+  ],
+  "floor_z_mm": 0,
+  "opening_mm": 50.00000000000001,
+  "width_mm": 40.00000000000001,
+  "clearance_per_side_mm": 5,
+  "idle_opening_mm": 80,
+  "errors": [],
+  "steps": [
+    {
+      "number": 1,
+      "kind": "ready",
+      "title": "대기 상태로 준비",
+      "motion": "movej",
+      "speed": {
+        "speed": 10.0,
+        "acceleration": 10.0
+      },
+      "profile": "high",
+      "target": [
+        0.0,
+        0.0,
+        90.0,
+        0.0,
+        90.0,
+        0.0
+      ],
+      "space": "joint"
+    },
+    {
+      "number": 2,
+      "kind": "target",
+      "title": "YOLO 상품 요청",
+      "motion": null
+    },
+    {
+      "number": 3,
+      "kind": "joint",
+      "title": "상품 접근 위치",
+      "motion": "movej",
+      "speed": {
+        "speed": 10.0,
+        "acceleration": 10.0
+      },
+      "profile": "high",
+      "target": [
+        -350.0,
+        0.0,
+        450.0,
+        180,
+        90,
+        90
+      ],
+      "space": "task"
+    },
+    {
+      "number": 4,
+      "kind": "gripper",
+      "title": "권장 폭으로 벌리기",
+      "motion": null,
+      "speed": {
+        "speed": 10.0,
+        "acceleration": 3000.0
+      },
+      "profile": "high",
+      "opening_mm": 50.00000000000001
+    },
+    {
+      "number": 5,
+      "kind": "line",
+      "title": "파지점으로 직선 접근",
+      "motion": "movel",
+      "speed": {
+        "speed": 5.0,
+        "acceleration": 5.0
+      },
+      "profile": "low",
+      "target": [
+        -450.0,
+        0.0,
+        450,
+        180,
+        90,
+        90
+      ],
+      "space": "task"
+    },
+    {
+      "number": 6,
+      "kind": "gripper",
+      "title": "접촉 확인 후 파지 유지",
+      "motion": null,
+      "speed": {
+        "speed": 2.0,
+        "acceleration": 3000.0
+      },
+      "profile": "low",
+      "contact": true,
+      "gate": "confirm-grip"
+    },
+    {
+      "number": 7,
+      "kind": "line",
+      "title": "접근 위치로 후퇴",
+      "motion": "movel",
+      "speed": {
+        "speed": 5.0,
+        "acceleration": 5.0
+      },
+      "profile": "low",
+      "target": [
+        -350.0,
+        0.0,
+        450.0,
+        180,
+        90,
+        90
+      ],
+      "space": "task"
+    },
+    {
+      "number": 8,
+      "kind": "joint",
+      "title": "1차 경유점",
+      "motion": "movej",
+      "speed": {
+        "speed": 10.0,
+        "acceleration": 10.0
+      },
+      "profile": "high",
+      "target": [
+        -180,
+        0,
+        60,
+        0,
+        120,
+        0
+      ],
+      "space": "joint"
+    },
+    {
+      "number": 9,
+      "kind": "joint",
+      "title": "J1 회전 · 2차 경유점",
+      "motion": "movej",
+      "speed": {
+        "speed": 10.0,
+        "acceleration": 10.0
+      },
+      "profile": "high",
+      "target": [
+        0,
+        0,
+        60,
+        0,
+        120,
+        0
+      ],
+      "space": "joint",
+      "j1_only": true
+    },
+    {
+      "number": 10,
+      "kind": "joint",
+      "title": "박스 위 위치",
+      "motion": "movej",
+      "speed": {
+        "speed": 10.0,
+        "acceleration": 10.0
+      },
+      "profile": "high",
+      "target": [
+        450,
+        0,
+        320,
+        0,
+        180,
+        0
+      ],
+      "space": "task"
+    },
+    {
+      "number": 11,
+      "kind": "line",
+      "title": "박스 놓기 위치로 하강",
+      "motion": "movel",
+      "speed": {
+        "speed": 5.0,
+        "acceleration": 5.0
+      },
+      "profile": "low",
+      "target": [
+        450,
+        0,
+        120,
+        0,
+        180,
+        0
+      ],
+      "space": "task",
+      "gate": "open-at-box"
+    },
+    {
+      "number": 12,
+      "kind": "gripper",
+      "title": "파지 전 벌림으로 개방",
+      "motion": null,
+      "speed": {
+        "speed": 2.0,
+        "acceleration": 3000.0
+      },
+      "profile": "low",
+      "opening_mm": 50.00000000000001
+    },
+    {
+      "number": 13,
+      "kind": "line",
+      "title": "박스 위로 상승",
+      "motion": "movel",
+      "speed": {
+        "speed": 5.0,
+        "acceleration": 5.0
+      },
+      "profile": "low",
+      "target": [
+        450,
+        0,
+        320,
+        0,
+        180,
+        0
+      ],
+      "space": "task"
+    },
+    {
+      "number": 14,
+      "kind": "joint",
+      "title": "2차 경유점 복귀",
+      "motion": "movej",
+      "speed": {
+        "speed": 10.0,
+        "acceleration": 10.0
+      },
+      "profile": "high",
+      "target": [
+        0,
+        0,
+        60,
+        0,
+        120,
+        0
+      ],
+      "space": "joint"
+    },
+    {
+      "number": 15,
+      "kind": "joint",
+      "title": "J1 역회전 · 1차 경유점",
+      "motion": "movej",
+      "speed": {
+        "speed": 10.0,
+        "acceleration": 10.0
+      },
+      "profile": "high",
+      "target": [
+        -180,
+        0,
+        60,
+        0,
+        120,
+        0
+      ],
+      "space": "joint",
+      "j1_only": true
+    },
+    {
+      "number": 16,
+      "kind": "joint",
+      "title": "대기 자세 복귀",
+      "motion": "movej",
+      "speed": {
+        "speed": 10.0,
+        "acceleration": 10.0
+      },
+      "profile": "high",
+      "target": [
+        0.0,
+        0.0,
+        90.0,
+        0.0,
+        90.0,
+        0.0
+      ],
+      "space": "joint"
+    },
+    {
+      "number": 17,
+      "kind": "gripper",
+      "title": "대기 벌림 복원",
+      "motion": null,
+      "speed": {
+        "speed": 10.0,
+        "acceleration": 3000.0
+      },
+      "profile": "high",
+      "opening_mm": 80
+    }
+  ]
+}

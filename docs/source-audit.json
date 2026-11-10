@@ -1,0 +1,3338 @@
+{
+  "repositories": {
+    "ryankim8815_yolov8": {
+      "origin": "https://github.com/ryankim8815/yolov8.git",
+      "commit": "c265ffb0424447dcef8ce67ef72c2172a3eac6ad"
+    },
+    "robotArm_Controller_demo": {
+      "origin": "https://github.com/vision-picking-robot/robotArm_Controller_demo.git",
+      "commit": null
+    },
+    "robotArm_Controller": {
+      "origin": "https://github.com/vision-picking-robot/robotArm_Controller.git",
+      "commit": "22db586b3020e0a6a6d0b9b4f9dc896facd033cb"
+    },
+    "e0509_gripper_description": {
+      "origin": "https://github.com/fhekwn549/e0509_gripper_description.git",
+      "commit": "ccee97a4c70cac475380593d62a1f3f44d993511"
+    }
+  },
+  "manifests": [
+    {
+      "path": "ryankim8815_yolov8/docker/robot-web-requirements.txt",
+      "sha256": "cd55e35769dafb2f975bcf6b18022b456b2854c3105dcdc4538bd3e5fda3e6e9",
+      "lines": [
+        {
+          "line": 1,
+          "text": "fastapi==0.162.0"
+        },
+        {
+          "line": 2,
+          "text": "pydantic==2.14.3"
+        },
+        {
+          "line": 3,
+          "text": "starlette==1.10.0"
+        },
+        {
+          "line": 4,
+          "text": "uvicorn==0.54.0"
+        },
+        {
+          "line": 5,
+          "text": "websockets==17.4"
+        }
+      ]
+    },
+    {
+      "path": "ryankim8815_yolov8/docker/robot-web.Dockerfile",
+      "sha256": "0bb1c98f6f2494dec24013b623cc827efa72545cdfa3760ac5f07a973c93ee1d",
+      "lines": [
+        {
+          "line": 1,
+          "text": "FROM python:3.11-slim"
+        },
+        {
+          "line": 2,
+          "text": "WORKDIR /srv/vision"
+        },
+        {
+          "line": 3,
+          "text": "COPY docker/robot-web-requirements.txt ."
+        },
+        {
+          "line": 4,
+          "text": "RUN pip install --no-cache-dir -r robot-web-requirements.txt"
+        },
+        {
+          "line": 5,
+          "text": "COPY app/ app/"
+        },
+        {
+          "line": 6,
+          "text": "CMD [\"uvicorn\", \"app.robot_web:create_robot_app\", \"--factory\", \"--uds\", \"/run/robot-api/http.sock\", \"--workers\", \"1\"]"
+        }
+      ]
+    },
+    {
+      "path": "ryankim8815_yolov8/docker/robot-web.Dockerfile.dockerignore",
+      "sha256": "88346b15999a9ba7bd18cf76ceebfed5eafb83e480f2837930b3a01f2fcef1da",
+      "lines": [
+        {
+          "line": 1,
+          "text": "*"
+        },
+        {
+          "line": 2,
+          "text": "!app/"
+        },
+        {
+          "line": 3,
+          "text": "!app/*.py"
+        },
+        {
+          "line": 4,
+          "text": "!app/static/"
+        },
+        {
+          "line": 5,
+          "text": "!app/static/robot*"
+        },
+        {
+          "line": 6,
+          "text": "!app/static/packing.css"
+        },
+        {
+          "line": 7,
+          "text": "!app/static/station-*"
+        },
+        {
+          "line": 8,
+          "text": "!docker/"
+        },
+        {
+          "line": 9,
+          "text": "!docker/robot-web-requirements.txt"
+        },
+        {
+          "line": 10,
+          "text": "!app/static/dashboard-camera.css"
+        },
+        {
+          "line": 11,
+          "text": "!app/static/detection-feed.js"
+        },
+        {
+          "line": 12,
+          "text": "!app/static/gripper-*.js"
+        }
+      ]
+    },
+    {
+      "path": "ryankim8815_yolov8/Dockerfile",
+      "sha256": "bfbbed839d99c485ca78799cd2c8705a6d3ad564cd3002d0bcb623d907cb46cb",
+      "lines": [
+        {
+          "line": 1,
+          "text": "# Docker Desktop runs Linux containers. Apple MPS/Core ML and AVFoundation stay on macOS."
+        },
+        {
+          "line": 2,
+          "text": "# This image provides the web/API gateway; it does not claim to containerize Apple acceleration."
+        },
+        {
+          "line": 3,
+          "text": "FROM nginx:stable-alpine"
+        },
+        {
+          "line": 4,
+          "text": "COPY docker/nginx.conf /etc/nginx/nginx.conf"
+        },
+        {
+          "line": 5,
+          "text": "USER nginx"
+        },
+        {
+          "line": 6,
+          "text": "EXPOSE 8080"
+        },
+        {
+          "line": 7,
+          "text": "HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \\"
+        },
+        {
+          "line": 8,
+          "text": "  CMD wget -q -O /dev/null http://127.0.0.1:8080/robot-healthz || exit 1"
+        },
+        {
+          "line": 9,
+          "text": "CMD [\"nginx\", \"-g\", \"daemon off;\"]"
+        }
+      ]
+    },
+    {
+      "path": "ryankim8815_yolov8/pyproject.toml",
+      "sha256": "c5b5bc1f4782a59ff896d2c33b1430161b720152e03a7c7ffe773a8e23fde0db",
+      "lines": [
+        {
+          "line": 1,
+          "text": "[project]"
+        },
+        {
+          "line": 2,
+          "text": "name = \"yolov8-camera-server\""
+        },
+        {
+          "line": 3,
+          "text": "version = \"0.1.0\""
+        },
+        {
+          "line": 4,
+          "text": "description = \"Local YOLOv8 camera serving for Apple Silicon\""
+        },
+        {
+          "line": 5,
+          "text": "requires-python = \">=3.11,<3.13\""
+        },
+        {
+          "line": 6,
+          "text": ""
+        },
+        {
+          "line": 7,
+          "text": "[tool.pytest.ini_options]"
+        },
+        {
+          "line": 8,
+          "text": "testpaths = [\"tests\"]"
+        },
+        {
+          "line": 9,
+          "text": "pythonpath = [\".\"]"
+        },
+        {
+          "line": 10,
+          "text": "addopts = \"-ra\""
+        }
+      ]
+    },
+    {
+      "path": "ryankim8815_yolov8/requirements-coreml.lock.txt",
+      "sha256": "0d111f0059e80effe400f17111c1c9be117bda7a1577a06f89b79aa31c78e89c",
+      "lines": [
+        {
+          "line": 1,
+          "text": "annotated-doc==0.0.5"
+        },
+        {
+          "line": 2,
+          "text": "annotated-types==0.8.0"
+        },
+        {
+          "line": 3,
+          "text": "anyio==4.16.0"
+        },
+        {
+          "line": 4,
+          "text": "attrs==26.1.0"
+        },
+        {
+          "line": 5,
+          "text": "cattrs==26.2.1"
+        },
+        {
+          "line": 6,
+          "text": "certifi==2026.10.23"
+        },
+        {
+          "line": 7,
+          "text": "charset-normalizer==3.5.2"
+        },
+        {
+          "line": 8,
+          "text": "click==8.5.0"
+        },
+        {
+          "line": 9,
+          "text": "contourpy==1.3.3"
+        },
+        {
+          "line": 10,
+          "text": "coremltools==9.0"
+        },
+        {
+          "line": 11,
+          "text": "cycler==0.12.1"
+        },
+        {
+          "line": 12,
+          "text": "fastapi==0.162.0"
+        },
+        {
+          "line": 13,
+          "text": "filelock==4.2.9"
+        },
+        {
+          "line": 14,
+          "text": "fonttools==4.68.0"
+        },
+        {
+          "line": 15,
+          "text": "fsspec==2026.9.0"
+        },
+        {
+          "line": 16,
+          "text": "h11==0.16.0"
+        },
+        {
+          "line": 17,
+          "text": "httpcore==1.0.9"
+        },
+        {
+          "line": 18,
+          "text": "httptools==0.9.0"
+        },
+        {
+          "line": 19,
+          "text": "httpx==0.28.1"
+        },
+        {
+          "line": 20,
+          "text": "idna==3.20"
+        },
+        {
+          "line": 21,
+          "text": "iniconfig==2.3.1"
+        },
+        {
+          "line": 22,
+          "text": "Jinja2==3.1.6"
+        },
+        {
+          "line": 23,
+          "text": "kiwisolver==1.5.1"
+        },
+        {
+          "line": 24,
+          "text": "MarkupSafe==3.0.4"
+        },
+        {
+          "line": 25,
+          "text": "matplotlib==3.11.2"
+        },
+        {
+          "line": 26,
+          "text": "mpmath==1.3.0"
+        },
+        {
+          "line": 27,
+          "text": "networkx==3.6.1"
+        },
+        {
+          "line": 28,
+          "text": "numpy==1.26.4"
+        },
+        {
+          "line": 29,
+          "text": "nvidia-ml-py==13.615.71"
+        },
+        {
+          "line": 30,
+          "text": "opencv-python==4.11.0.86"
+        },
+        {
+          "line": 31,
+          "text": "opentelemetry-api==1.45.2"
+        },
+        {
+          "line": 32,
+          "text": "packaging==26.3"
+        },
+        {
+          "line": 33,
+          "text": "pillow==13.0.0"
+        },
+        {
+          "line": 34,
+          "text": "pluggy==1.7.0"
+        },
+        {
+          "line": 35,
+          "text": "polars==2.1.0"
+        },
+        {
+          "line": 36,
+          "text": "polars-runtime-32==2.1.0"
+        },
+        {
+          "line": 37,
+          "text": "protobuf==7.36.2"
+        },
+        {
+          "line": 38,
+          "text": "psutil==7.2.2"
+        },
+        {
+          "line": 39,
+          "text": "pyaml==26.7.0"
+        },
+        {
+          "line": 40,
+          "text": "pycocotools==2.0.11"
+        },
+        {
+          "line": 41,
+          "text": "pydantic==2.14.3"
+        },
+        {
+          "line": 42,
+          "text": "pydantic_core==2.50.4"
+        },
+        {
+          "line": 43,
+          "text": "Pygments==2.21.0"
+        },
+        {
+          "line": 44,
+          "text": "pyparsing==3.3.3"
+        },
+        {
+          "line": 45,
+          "text": "pyrealsense2-macosx==2.56.5; sys_platform == \"darwin\" and platform_release >= \"24\""
+        },
+        {
+          "line": 46,
+          "text": "pytest==8.4.2"
+        },
+        {
+          "line": 47,
+          "text": "python-dateutil==4.0.0"
+        },
+        {
+          "line": 48,
+          "text": "python-dotenv==1.2.4"
+        },
+        {
+          "line": 49,
+          "text": "PyYAML==6.0.3"
+        },
+        {
+          "line": 50,
+          "text": "requests==2.34.2"
+        },
+        {
+          "line": 51,
+          "text": "starlette==1.10.0"
+        },
+        {
+          "line": 52,
+          "text": "sympy==1.14.0"
+        },
+        {
+          "line": 53,
+          "text": "torch==2.7.0"
+        },
+        {
+          "line": 54,
+          "text": "torchvision==0.22.0"
+        },
+        {
+          "line": 55,
+          "text": "tqdm==4.70.1"
+        },
+        {
+          "line": 56,
+          "text": "typing-inspection==0.4.5"
+        },
+        {
+          "line": 57,
+          "text": "typing_extensions==4.16.0"
+        },
+        {
+          "line": 58,
+          "text": "tzdata==2026.6"
+        },
+        {
+          "line": 59,
+          "text": "ultralytics==8.4.202"
+        },
+        {
+          "line": 60,
+          "text": "ultralytics-platform==0.1.102"
+        },
+        {
+          "line": 61,
+          "text": "ultralytics-thop==2.2.5"
+        },
+        {
+          "line": 62,
+          "text": "urllib3==2.8.0"
+        },
+        {
+          "line": 63,
+          "text": "uvicorn==0.54.0"
+        },
+        {
+          "line": 64,
+          "text": "uvloop==0.23.0"
+        },
+        {
+          "line": 65,
+          "text": "watchfiles==1.3.0"
+        },
+        {
+          "line": 66,
+          "text": "websockets==17.4"
+        }
+      ]
+    },
+    {
+      "path": "ryankim8815_yolov8/requirements-mps.lock.txt",
+      "sha256": "187487a104b288d87daad889c6ea13d4b97df6c9fa504eb0488d0c9206934b22",
+      "lines": [
+        {
+          "line": 1,
+          "text": "annotated-doc==0.0.5"
+        },
+        {
+          "line": 2,
+          "text": "annotated-types==0.8.0"
+        },
+        {
+          "line": 3,
+          "text": "anyio==4.16.0"
+        },
+        {
+          "line": 4,
+          "text": "certifi==2026.10.23"
+        },
+        {
+          "line": 5,
+          "text": "charset-normalizer==3.5.2"
+        },
+        {
+          "line": 6,
+          "text": "click==8.5.0"
+        },
+        {
+          "line": 7,
+          "text": "contourpy==1.3.3"
+        },
+        {
+          "line": 8,
+          "text": "cycler==0.12.1"
+        },
+        {
+          "line": 9,
+          "text": "fastapi==0.162.0"
+        },
+        {
+          "line": 10,
+          "text": "filelock==4.2.9"
+        },
+        {
+          "line": 11,
+          "text": "fonttools==4.68.0"
+        },
+        {
+          "line": 12,
+          "text": "fsspec==2026.9.0"
+        },
+        {
+          "line": 13,
+          "text": "h11==0.16.0"
+        },
+        {
+          "line": 14,
+          "text": "httpcore==1.0.9"
+        },
+        {
+          "line": 15,
+          "text": "httptools==0.9.0"
+        },
+        {
+          "line": 16,
+          "text": "httpx==0.28.1"
+        },
+        {
+          "line": 17,
+          "text": "idna==3.20"
+        },
+        {
+          "line": 18,
+          "text": "iniconfig==2.3.1"
+        },
+        {
+          "line": 19,
+          "text": "Jinja2==3.1.6"
+        },
+        {
+          "line": 20,
+          "text": "kiwisolver==1.5.1"
+        },
+        {
+          "line": 21,
+          "text": "MarkupSafe==3.0.4"
+        },
+        {
+          "line": 22,
+          "text": "matplotlib==3.11.2"
+        },
+        {
+          "line": 23,
+          "text": "mpmath==1.3.0"
+        },
+        {
+          "line": 24,
+          "text": "networkx==3.6.1"
+        },
+        {
+          "line": 25,
+          "text": "numpy==1.26.4"
+        },
+        {
+          "line": 26,
+          "text": "nvidia-ml-py==13.615.71"
+        },
+        {
+          "line": 27,
+          "text": "opencv-python==4.11.0.86"
+        },
+        {
+          "line": 28,
+          "text": "opentelemetry-api==1.45.2"
+        },
+        {
+          "line": 29,
+          "text": "packaging==26.3"
+        },
+        {
+          "line": 30,
+          "text": "pillow==13.0.0"
+        },
+        {
+          "line": 31,
+          "text": "pluggy==1.7.0"
+        },
+        {
+          "line": 32,
+          "text": "polars==2.1.0"
+        },
+        {
+          "line": 33,
+          "text": "polars-runtime-32==2.1.0"
+        },
+        {
+          "line": 34,
+          "text": "psutil==7.2.2"
+        },
+        {
+          "line": 35,
+          "text": "pycocotools==2.0.11"
+        },
+        {
+          "line": 36,
+          "text": "pydantic==2.14.3"
+        },
+        {
+          "line": 37,
+          "text": "pydantic_core==2.50.4"
+        },
+        {
+          "line": 38,
+          "text": "Pygments==2.21.0"
+        },
+        {
+          "line": 39,
+          "text": "pyparsing==3.3.3"
+        },
+        {
+          "line": 40,
+          "text": "pyrealsense2-macosx==2.56.5; sys_platform == \"darwin\" and platform_release >= \"24\""
+        },
+        {
+          "line": 41,
+          "text": "pytest==8.4.2"
+        },
+        {
+          "line": 42,
+          "text": "python-dateutil==4.0.0"
+        },
+        {
+          "line": 43,
+          "text": "python-dotenv==1.2.4"
+        },
+        {
+          "line": 44,
+          "text": "PyYAML==6.0.3"
+        },
+        {
+          "line": 45,
+          "text": "requests==2.34.2"
+        },
+        {
+          "line": 46,
+          "text": "starlette==1.10.0"
+        },
+        {
+          "line": 47,
+          "text": "sympy==1.14.0"
+        },
+        {
+          "line": 48,
+          "text": "torch==2.7.0"
+        },
+        {
+          "line": 49,
+          "text": "torchvision==0.22.0"
+        },
+        {
+          "line": 50,
+          "text": "typing-inspection==0.4.5"
+        },
+        {
+          "line": 51,
+          "text": "typing_extensions==4.16.0"
+        },
+        {
+          "line": 52,
+          "text": "tzdata==2026.6"
+        },
+        {
+          "line": 53,
+          "text": "ultralytics==8.4.202"
+        },
+        {
+          "line": 54,
+          "text": "ultralytics-platform==0.1.102"
+        },
+        {
+          "line": 55,
+          "text": "ultralytics-thop==2.2.5"
+        },
+        {
+          "line": 56,
+          "text": "urllib3==2.8.0"
+        },
+        {
+          "line": 57,
+          "text": "uvicorn==0.54.0"
+        },
+        {
+          "line": 58,
+          "text": "uvloop==0.23.0"
+        },
+        {
+          "line": 59,
+          "text": "watchfiles==1.3.0"
+        },
+        {
+          "line": 60,
+          "text": "websockets==17.4"
+        }
+      ]
+    },
+    {
+      "path": "ryankim8815_yolov8/requirements-train.lock.txt",
+      "sha256": "5272da0c5bd0c4328a65ddf80580b518aa4756b948a1151927de4bfa70fd09f6",
+      "lines": [
+        {
+          "line": 1,
+          "text": "annotated-doc==0.0.5"
+        },
+        {
+          "line": 2,
+          "text": "annotated-types==0.8.0"
+        },
+        {
+          "line": 3,
+          "text": "anyio==4.16.0"
+        },
+        {
+          "line": 4,
+          "text": "certifi==2026.10.23"
+        },
+        {
+          "line": 5,
+          "text": "charset-normalizer==3.5.2"
+        },
+        {
+          "line": 6,
+          "text": "click==8.5.0"
+        },
+        {
+          "line": 7,
+          "text": "contourpy==1.3.3"
+        },
+        {
+          "line": 8,
+          "text": "cycler==0.12.1"
+        },
+        {
+          "line": 9,
+          "text": "fastapi==0.162.0"
+        },
+        {
+          "line": 10,
+          "text": "filelock==4.2.9"
+        },
+        {
+          "line": 11,
+          "text": "fonttools==4.68.0"
+        },
+        {
+          "line": 12,
+          "text": "fsspec==2026.9.0"
+        },
+        {
+          "line": 13,
+          "text": "h11==0.16.0"
+        },
+        {
+          "line": 14,
+          "text": "httpcore==1.0.9"
+        },
+        {
+          "line": 15,
+          "text": "httptools==0.9.0"
+        },
+        {
+          "line": 16,
+          "text": "httpx==0.28.1"
+        },
+        {
+          "line": 17,
+          "text": "idna==3.20"
+        },
+        {
+          "line": 18,
+          "text": "iniconfig==2.3.1"
+        },
+        {
+          "line": 19,
+          "text": "Jinja2==3.1.6"
+        },
+        {
+          "line": 20,
+          "text": "kiwisolver==1.5.1"
+        },
+        {
+          "line": 21,
+          "text": "MarkupSafe==3.0.4"
+        },
+        {
+          "line": 22,
+          "text": "matplotlib==3.11.2"
+        },
+        {
+          "line": 23,
+          "text": "mpmath==1.3.0"
+        },
+        {
+          "line": 24,
+          "text": "networkx==3.6.1"
+        },
+        {
+          "line": 25,
+          "text": "numpy==1.26.4"
+        },
+        {
+          "line": 26,
+          "text": "nvidia-ml-py==13.615.71"
+        },
+        {
+          "line": 27,
+          "text": "opencv-python==4.11.0.86"
+        },
+        {
+          "line": 28,
+          "text": "opentelemetry-api==1.45.2"
+        },
+        {
+          "line": 29,
+          "text": "packaging==26.3"
+        },
+        {
+          "line": 30,
+          "text": "pillow==13.0.0"
+        },
+        {
+          "line": 31,
+          "text": "pluggy==1.7.0"
+        },
+        {
+          "line": 32,
+          "text": "polars==2.1.0"
+        },
+        {
+          "line": 33,
+          "text": "polars-runtime-32==2.1.0"
+        },
+        {
+          "line": 34,
+          "text": "psutil==7.2.2"
+        },
+        {
+          "line": 35,
+          "text": "pycocotools==2.0.11"
+        },
+        {
+          "line": 36,
+          "text": "pydantic==2.14.3"
+        },
+        {
+          "line": 37,
+          "text": "pydantic_core==2.50.4"
+        },
+        {
+          "line": 38,
+          "text": "Pygments==2.21.0"
+        },
+        {
+          "line": 39,
+          "text": "pyparsing==3.3.3"
+        },
+        {
+          "line": 40,
+          "text": "pytest==8.4.2"
+        },
+        {
+          "line": 41,
+          "text": "python-dateutil==4.0.0"
+        },
+        {
+          "line": 42,
+          "text": "python-dotenv==1.2.4"
+        },
+        {
+          "line": 43,
+          "text": "PyYAML==6.0.3"
+        },
+        {
+          "line": 44,
+          "text": "requests==2.34.2"
+        },
+        {
+          "line": 45,
+          "text": "starlette==1.10.0"
+        },
+        {
+          "line": 46,
+          "text": "sympy==1.14.0"
+        },
+        {
+          "line": 47,
+          "text": "torch==2.7.0"
+        },
+        {
+          "line": 48,
+          "text": "torchvision==0.22.0"
+        },
+        {
+          "line": 49,
+          "text": "typing-inspection==0.4.5"
+        },
+        {
+          "line": 50,
+          "text": "typing_extensions==4.16.0"
+        },
+        {
+          "line": 51,
+          "text": "tzdata==2026.6"
+        },
+        {
+          "line": 52,
+          "text": "ultralytics==8.4.202"
+        },
+        {
+          "line": 53,
+          "text": "ultralytics-platform==0.1.102"
+        },
+        {
+          "line": 54,
+          "text": "ultralytics-thop==2.2.5"
+        },
+        {
+          "line": 55,
+          "text": "urllib3==2.8.0"
+        },
+        {
+          "line": 56,
+          "text": "uvicorn==0.54.0"
+        },
+        {
+          "line": 57,
+          "text": "uvloop==0.23.0"
+        },
+        {
+          "line": 58,
+          "text": "watchfiles==1.3.0"
+        },
+        {
+          "line": 59,
+          "text": "websockets==17.4"
+        }
+      ]
+    },
+    {
+      "path": "ryankim8815_yolov8/rosbridge/Dockerfile",
+      "sha256": "0e53c8f82df52394bf0b38b98648767daa75874f091ac7e0734f6952767d9582",
+      "lines": [
+        {
+          "line": 1,
+          "text": "FROM ros:humble-ros-base"
+        },
+        {
+          "line": 2,
+          "text": "SHELL [\"/bin/bash\", \"-c\"]"
+        },
+        {
+          "line": 3,
+          "text": ""
+        },
+        {
+          "line": 4,
+          "text": "RUN apt-get update && apt-get install -y --no-install-recommends \\"
+        },
+        {
+          "line": 5,
+          "text": "        ros-humble-rosbridge-suite ros-humble-rosidl-default-generators \\"
+        },
+        {
+          "line": 6,
+          "text": "        python3-colcon-common-extensions build-essential \\"
+        },
+        {
+          "line": 7,
+          "text": "    && rm -rf /var/lib/apt/lists/*"
+        },
+        {
+          "line": 8,
+          "text": "WORKDIR /ros_ws"
+        },
+        {
+          "line": 9,
+          "text": "COPY --from=dsr_interfaces . src/dsr_msgs2/"
+        },
+        {
+          "line": 10,
+          "text": "RUN source /opt/ros/humble/setup.bash && \\"
+        },
+        {
+          "line": 11,
+          "text": "    colcon build --packages-select dsr_msgs2 --cmake-args -DBUILD_TESTING=OFF"
+        },
+        {
+          "line": 12,
+          "text": "COPY start.sh /ros_ws/start.sh"
+        },
+        {
+          "line": 13,
+          "text": "COPY read_joints.py /ros_ws/read_joints.py"
+        },
+        {
+          "line": 14,
+          "text": "COPY fastdds.xml /etc/doosan/fastdds.xml"
+        },
+        {
+          "line": 15,
+          "text": "ENV FASTRTPS_DEFAULT_PROFILES_FILE=/etc/doosan/fastdds.xml"
+        },
+        {
+          "line": 16,
+          "text": "CMD [\"bash\", \"/ros_ws/start.sh\"]"
+        }
+      ]
+    },
+    {
+      "path": "ryankim8815_yolov8/rosbridge/doosan-driver.Dockerfile",
+      "sha256": "6d127ecbc08224bfa20782f6ee2e074706cfd50ce04dad0a454299a0f3c8ec7f",
+      "lines": [
+        {
+          "line": 1,
+          "text": "FROM ros:humble-ros-base"
+        },
+        {
+          "line": 2,
+          "text": "SHELL [\"/bin/bash\", \"-c\"]"
+        },
+        {
+          "line": 3,
+          "text": "ARG DRCF_MAJOR=2"
+        },
+        {
+          "line": 4,
+          "text": "RUN test \"$(dpkg --print-architecture)\" = amd64 && test \"$DRCF_MAJOR\" = 2"
+        },
+        {
+          "line": 5,
+          "text": "RUN apt-get update && apt-get install -y --no-install-recommends \\"
+        },
+        {
+          "line": 6,
+          "text": "        build-essential libyaml-cpp-dev ros-humble-backward-ros ros-humble-forward-command-controller \\"
+        },
+        {
+          "line": 7,
+          "text": "        ros-humble-controller-manager ros-humble-joint-state-broadcaster ros-humble-moveit-msgs \\"
+        },
+        {
+          "line": 8,
+          "text": "        ros-humble-kdl-parser ros-humble-robot-state-publisher ros-humble-xacro \\"
+        },
+        {
+          "line": 9,
+          "text": "    && rm -rf /var/lib/apt/lists/*"
+        },
+        {
+          "line": 10,
+          "text": "WORKDIR /doosan_ws"
+        },
+        {
+          "line": 11,
+          "text": "COPY --from=doosan dsr_msgs2/ src/dsr_msgs2/"
+        },
+        {
+          "line": 12,
+          "text": "COPY --from=dsr_interfaces msg/RobotDisconnection.msg src/dsr_msgs2/msg/"
+        },
+        {
+          "line": 13,
+          "text": "RUN sed -i '/\"msg\\/RobotError.msg\"/a\\  \"msg/RobotDisconnection.msg\"' src/dsr_msgs2/CMakeLists.txt"
+        },
+        {
+          "line": 14,
+          "text": "ENV CMAKE_BUILD_PARALLEL_LEVEL=4"
+        },
+        {
+          "line": 15,
+          "text": "RUN source /opt/ros/humble/setup.bash && colcon build --packages-select dsr_msgs2 --cmake-args -DBUILD_TESTING=OFF"
+        },
+        {
+          "line": 16,
+          "text": "COPY --from=doosan common2/ src/common2/"
+        },
+        {
+          "line": 17,
+          "text": "COPY --from=drfl include/ src/common2/include/"
+        },
+        {
+          "line": 18,
+          "text": "COPY --from=drfl library/Linux/64bits/20.04/ /opt/doosan/lib/"
+        },
+        {
+          "line": 19,
+          "text": "COPY gl010117.sha256 ./"
+        },
+        {
+          "line": 20,
+          "text": "RUN sha256sum -c gl010117.sha256 && cd /opt/doosan/lib && \\"
+        },
+        {
+          "line": 21,
+          "text": "    cp libDRFL.a /doosan_ws/src/common2/lib/humble/x86_64/libDRFL.a && \\"
+        },
+        {
+          "line": 22,
+          "text": "    ln -s /opt/doosan/lib/libPocoFoundation.so.62 /doosan_ws/src/common2/lib/humble/x86_64/libPocoFoundation.so && \\"
+        },
+        {
+          "line": 23,
+          "text": "    ln -s /opt/doosan/lib/libPocoNet.so.62 /doosan_ws/src/common2/lib/humble/x86_64/libPocoNet.so && \\"
+        },
+        {
+          "line": 24,
+          "text": "    echo /opt/doosan/lib > /etc/ld.so.conf.d/doosan.conf && ldconfig"
+        },
+        {
+          "line": 25,
+          "text": "COPY --from=doosan dsr_hardware2/ src/dsr_hardware2/"
+        },
+        {
+          "line": 26,
+          "text": "COPY --from=doosan dsr_controller2/ src/dsr_controller2/"
+        },
+        {
+          "line": 27,
+          "text": "COPY --from=doosan dsr_description2/ src/dsr_description2/"
+        },
+        {
+          "line": 28,
+          "text": "COPY --from=doosan dsr_bringup2/ src/dsr_bringup2/"
+        },
+        {
+          "line": 29,
+          "text": "COPY gl010117.patch ./"
+        },
+        {
+          "line": 30,
+          "text": "COPY direct_teach.hpp src/dsr_controller2/src/direct_teach.hpp"
+        },
+        {
+          "line": 31,
+          "text": "RUN cd src && sed -i 's/\\r$//' dsr_hardware2/src/dsr_hw_interface2.cpp dsr_controller2/src/dsr_controller2.cpp dsr_bringup2/launch/dsr_bringup2_rviz.launch.py && patch -p1 < ../gl010117.patch"
+        },
+        {
+          "line": 32,
+          "text": "RUN source install/setup.bash && colcon build --executor sequential --packages-skip dsr_msgs2 --cmake-args -DBUILD_TESTING=OFF && \\"
+        },
+        {
+          "line": 33,
+          "text": "    source install/setup.bash && for p in dsr_hardware2 dsr_controller2; do \\"
+        },
+        {
+          "line": 34,
+          "text": "        ldd -r \"install/$p/lib/lib$p.so\" > /tmp/link-check; \\"
+        },
+        {
+          "line": 35,
+          "text": "        ! grep -E 'not found|undefined symbol' /tmp/link-check || exit 1; \\"
+        },
+        {
+          "line": 36,
+          "text": "    done"
+        },
+        {
+          "line": 37,
+          "text": "COPY check-controller.cpp ./"
+        },
+        {
+          "line": 38,
+          "text": "RUN g++ -std=c++17 -Isrc/common2/include check-controller.cpp /opt/doosan/lib/libDRFL.a \\"
+        },
+        {
+          "line": 39,
+          "text": "        /opt/doosan/lib/libPocoNet.so.62 /opt/doosan/lib/libPocoFoundation.so.62 -pthread -o /usr/local/bin/check-e0509 && \\"
+        },
+        {
+          "line": 40,
+          "text": "    test \"$(check-e0509 --sdk-version)\" = GL010117"
+        },
+        {
+          "line": 41,
+          "text": "COPY start-driver.sh driver_health.py /doosan_ws/"
+        },
+        {
+          "line": 42,
+          "text": "COPY fastdds.xml /etc/doosan/fastdds.xml"
+        },
+        {
+          "line": 43,
+          "text": "ENV FASTRTPS_DEFAULT_PROFILES_FILE=/etc/doosan/fastdds.xml"
+        },
+        {
+          "line": 44,
+          "text": "CMD [\"bash\", \"/doosan_ws/start-driver.sh\", \"--force-request-access\"]"
+        }
+      ]
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/CMakeLists.txt",
+      "sha256": "9b9b77ffce4b3c341d4f09979971e221b3f8a5237c5736399f7436c8877b4a30",
+      "lines": [
+        {
+          "line": 1,
+          "text": "cmake_minimum_required(VERSION 3.16)"
+        },
+        {
+          "line": 2,
+          "text": "project(warehouse_gripper LANGUAGES CXX)"
+        },
+        {
+          "line": 3,
+          "text": ""
+        },
+        {
+          "line": 4,
+          "text": "find_package(ament_cmake REQUIRED)"
+        },
+        {
+          "line": 5,
+          "text": "find_package(controller_interface REQUIRED)"
+        },
+        {
+          "line": 6,
+          "text": "find_package(dsr_common2 REQUIRED)"
+        },
+        {
+          "line": 7,
+          "text": "find_package(dsr_hardware2 REQUIRED)"
+        },
+        {
+          "line": 8,
+          "text": "find_package(pluginlib REQUIRED)"
+        },
+        {
+          "line": 9,
+          "text": "find_package(rclcpp REQUIRED)"
+        },
+        {
+          "line": 10,
+          "text": "find_package(std_srvs REQUIRED)"
+        },
+        {
+          "line": 11,
+          "text": "find_package(Threads REQUIRED)"
+        },
+        {
+          "line": 12,
+          "text": ""
+        },
+        {
+          "line": 13,
+          "text": "add_library(${PROJECT_NAME} SHARED src/gripper_controller.cpp)"
+        },
+        {
+          "line": 14,
+          "text": "target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)"
+        },
+        {
+          "line": 15,
+          "text": "target_include_directories(${PROJECT_NAME} PRIVATE include)"
+        },
+        {
+          "line": 16,
+          "text": "ament_target_dependencies(${PROJECT_NAME}"
+        },
+        {
+          "line": 17,
+          "text": "  controller_interface dsr_hardware2 pluginlib rclcpp std_srvs)"
+        },
+        {
+          "line": 18,
+          "text": "target_link_libraries(${PROJECT_NAME} dsr_common2::drfl Threads::Threads)"
+        },
+        {
+          "line": 19,
+          "text": "pluginlib_export_plugin_description_file(controller_interface gripper_plugin.xml)"
+        },
+        {
+          "line": 20,
+          "text": "install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION lib)"
+        },
+        {
+          "line": 21,
+          "text": "install(DIRECTORY config launch DESTINATION share/${PROJECT_NAME})"
+        },
+        {
+          "line": 22,
+          "text": "if(BUILD_TESTING)"
+        },
+        {
+          "line": 23,
+          "text": "  enable_testing()"
+        },
+        {
+          "line": 24,
+          "text": "  add_executable(gripper_protocol_test test/test_protocol.cpp)"
+        },
+        {
+          "line": 25,
+          "text": "  target_compile_features(gripper_protocol_test PRIVATE cxx_std_17)"
+        },
+        {
+          "line": 26,
+          "text": "  target_include_directories(gripper_protocol_test PRIVATE include)"
+        },
+        {
+          "line": 27,
+          "text": "  add_test(NAME gripper_protocol_test COMMAND gripper_protocol_test)"
+        },
+        {
+          "line": 28,
+          "text": "  add_executable(gripper_rtu_test test/test_rtu_session.cpp)"
+        },
+        {
+          "line": 29,
+          "text": "  target_compile_features(gripper_rtu_test PRIVATE cxx_std_17)"
+        },
+        {
+          "line": 30,
+          "text": "  target_include_directories(gripper_rtu_test PRIVATE include)"
+        },
+        {
+          "line": 31,
+          "text": "  target_link_libraries(gripper_rtu_test Threads::Threads)"
+        },
+        {
+          "line": 32,
+          "text": "  add_test(NAME gripper_rtu_test COMMAND gripper_rtu_test)"
+        },
+        {
+          "line": 33,
+          "text": "endif()"
+        },
+        {
+          "line": 34,
+          "text": "ament_package()"
+        }
+      ]
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/package.xml",
+      "sha256": "945a41acfe8a3dd8e874cf9144c6177f1ba513fc01666a58ef28b2c4ad5b459a",
+      "lines": [
+        {
+          "line": 1,
+          "text": "<?xml version=\"1.0\"?>"
+        },
+        {
+          "line": 2,
+          "text": "<package format=\"3\">"
+        },
+        {
+          "line": 3,
+          "text": "  <name>warehouse_gripper</name>"
+        },
+        {
+          "line": 4,
+          "text": "  <version>0.1.0</version>"
+        },
+        {
+          "line": 5,
+          "text": "  <description>ROS 2 controller for a flange-connected RH-P12-RN-A gripper</description>"
+        },
+        {
+          "line": 6,
+          "text": "  <maintainer email=\"skdms8827@s3i.co.kr\">naeun</maintainer>"
+        },
+        {
+          "line": 7,
+          "text": "  <license>Apache-2.0</license>"
+        },
+        {
+          "line": 8,
+          "text": "  <buildtool_depend>ament_cmake</buildtool_depend>"
+        },
+        {
+          "line": 9,
+          "text": "  <depend>controller_interface</depend>"
+        },
+        {
+          "line": 10,
+          "text": "  <depend>dsr_common2</depend>"
+        },
+        {
+          "line": 11,
+          "text": "  <depend>dsr_hardware2</depend>"
+        },
+        {
+          "line": 12,
+          "text": "  <depend>pluginlib</depend>"
+        },
+        {
+          "line": 13,
+          "text": "  <depend>rclcpp</depend>"
+        },
+        {
+          "line": 14,
+          "text": "  <depend>std_srvs</depend>"
+        },
+        {
+          "line": 15,
+          "text": "  <exec_depend>controller_manager</exec_depend>"
+        },
+        {
+          "line": 16,
+          "text": "  <exec_depend>launch</exec_depend>"
+        },
+        {
+          "line": 17,
+          "text": "  <exec_depend>launch_ros</exec_depend>"
+        },
+        {
+          "line": 18,
+          "text": "  <export><build_type>ament_cmake</build_type></export>"
+        },
+        {
+          "line": 19,
+          "text": "</package>"
+        }
+      ],
+      "buildtool_depend": [
+        "ament_cmake"
+      ],
+      "build_type": [
+        "ament_cmake"
+      ]
+    },
+    {
+      "path": "robotArm_Controller/warehouse_interfaces/CMakeLists.txt",
+      "sha256": "4291dc60ff18ce620b2150cb5000710816c4f000b8cafb71e88adfc8ea62c36d",
+      "lines": [
+        {
+          "line": 1,
+          "text": "cmake_minimum_required(VERSION 3.8)"
+        },
+        {
+          "line": 2,
+          "text": "project(warehouse_interfaces)"
+        },
+        {
+          "line": 3,
+          "text": ""
+        },
+        {
+          "line": 4,
+          "text": "if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES \"Clang\")"
+        },
+        {
+          "line": 5,
+          "text": "  add_compile_options(-Wall -Wextra -Wpedantic)"
+        },
+        {
+          "line": 6,
+          "text": "endif()"
+        },
+        {
+          "line": 7,
+          "text": ""
+        },
+        {
+          "line": 8,
+          "text": "find_package(ament_cmake REQUIRED)"
+        },
+        {
+          "line": 9,
+          "text": "find_package(rosidl_default_generators REQUIRED)"
+        },
+        {
+          "line": 10,
+          "text": ""
+        },
+        {
+          "line": 11,
+          "text": "rosidl_generate_interfaces(${PROJECT_NAME}"
+        },
+        {
+          "line": 12,
+          "text": "  \"srv/PickPlace.srv\""
+        },
+        {
+          "line": 13,
+          "text": "  \"srv/MoveToPose.srv\""
+        },
+        {
+          "line": 14,
+          "text": "  \"srv/QueryRfidTag.srv\""
+        },
+        {
+          "line": 15,
+          "text": ")"
+        },
+        {
+          "line": 16,
+          "text": ""
+        },
+        {
+          "line": 17,
+          "text": "ament_export_dependencies(rosidl_default_runtime)"
+        },
+        {
+          "line": 18,
+          "text": "ament_package()"
+        }
+      ]
+    },
+    {
+      "path": "robotArm_Controller/warehouse_interfaces/package.xml",
+      "sha256": "e329b9fd2eafc2daa35e86f89ec6f8389153fbc5073492b63b2d7c491456a877",
+      "lines": [
+        {
+          "line": 1,
+          "text": "<?xml version=\"1.0\"?>"
+        },
+        {
+          "line": 2,
+          "text": "<?xml-model href=\"http://download.ros.org/schema/package_format3.xsd\" schematypens=\"http://www.w3.org/2001/XMLSchema\"?>"
+        },
+        {
+          "line": 3,
+          "text": "<package format=\"3\">"
+        },
+        {
+          "line": 4,
+          "text": "  <name>warehouse_interfaces</name>"
+        },
+        {
+          "line": 5,
+          "text": "  <version>0.0.1</version>"
+        },
+        {
+          "line": 6,
+          "text": "  <description>Interfaces for warehouse motion control and RFID vision picking</description>"
+        },
+        {
+          "line": 7,
+          "text": "  <maintainer email=\"naeun@todo.todo\">naeun</maintainer>"
+        },
+        {
+          "line": 8,
+          "text": "  <license>Apache-2.0</license>"
+        },
+        {
+          "line": 9,
+          "text": ""
+        },
+        {
+          "line": 10,
+          "text": "  <buildtool_depend>ament_cmake</buildtool_depend>"
+        },
+        {
+          "line": 11,
+          "text": "  <buildtool_depend>rosidl_default_generators</buildtool_depend>"
+        },
+        {
+          "line": 12,
+          "text": ""
+        },
+        {
+          "line": 13,
+          "text": "  <exec_depend>rosidl_default_runtime</exec_depend>"
+        },
+        {
+          "line": 14,
+          "text": ""
+        },
+        {
+          "line": 15,
+          "text": "  <member_of_group>rosidl_interface_packages</member_of_group>"
+        },
+        {
+          "line": 16,
+          "text": ""
+        },
+        {
+          "line": 17,
+          "text": "  <export>"
+        },
+        {
+          "line": 18,
+          "text": "    <build_type>ament_cmake</build_type>"
+        },
+        {
+          "line": 19,
+          "text": "  </export>"
+        },
+        {
+          "line": 20,
+          "text": "</package>"
+        }
+      ],
+      "buildtool_depend": [
+        "ament_cmake",
+        "rosidl_default_generators"
+      ],
+      "build_type": [
+        "ament_cmake"
+      ]
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/package.xml",
+      "sha256": "8d6e2d38a8149637b41bd7741072c8729108274e2cf1c3ab0e38492c61359b23",
+      "lines": [
+        {
+          "line": 1,
+          "text": "<?xml version=\"1.0\"?>"
+        },
+        {
+          "line": 2,
+          "text": "<?xml-model href=\"http://download.ros.org/schema/package_format3.xsd\" schematypens=\"http://www.w3.org/2001/XMLSchema\"?>"
+        },
+        {
+          "line": 3,
+          "text": "<package format=\"3\">"
+        },
+        {
+          "line": 4,
+          "text": "  <name>warehouse_motion</name>"
+        },
+        {
+          "line": 5,
+          "text": "  <version>0.1.0</version>"
+        },
+        {
+          "line": 6,
+          "text": "  <description>Doosan E0509 pick and place motion with floor safety limits for the warehouse picking scenario</description>"
+        },
+        {
+          "line": 7,
+          "text": "  <maintainer email=\"skdms8827@s3i.co.kr\">naeun</maintainer>"
+        },
+        {
+          "line": 8,
+          "text": "  <license>Apache-2.0</license>"
+        },
+        {
+          "line": 9,
+          "text": ""
+        },
+        {
+          "line": 10,
+          "text": "  <exec_depend>rclpy</exec_depend>"
+        },
+        {
+          "line": 11,
+          "text": "  <exec_depend>std_msgs</exec_depend>"
+        },
+        {
+          "line": 12,
+          "text": "  <exec_depend>std_srvs</exec_depend>"
+        },
+        {
+          "line": 13,
+          "text": "  <exec_depend>warehouse_gripper</exec_depend>"
+        },
+        {
+          "line": 14,
+          "text": "  <exec_depend>launch</exec_depend>"
+        },
+        {
+          "line": 15,
+          "text": "  <exec_depend>launch_ros</exec_depend>"
+        },
+        {
+          "line": 16,
+          "text": "  <exec_depend>ament_index_python</exec_depend>"
+        },
+        {
+          "line": 17,
+          "text": "  <exec_depend>python3-yaml</exec_depend>"
+        },
+        {
+          "line": 18,
+          "text": "  <exec_depend>dsr_common2</exec_depend>"
+        },
+        {
+          "line": 19,
+          "text": "  <exec_depend>dsr_msgs2</exec_depend>"
+        },
+        {
+          "line": 20,
+          "text": "  <exec_depend>warehouse_interfaces</exec_depend>"
+        },
+        {
+          "line": 21,
+          "text": ""
+        },
+        {
+          "line": 22,
+          "text": "  <test_depend>python3-pytest</test_depend>"
+        },
+        {
+          "line": 23,
+          "text": ""
+        },
+        {
+          "line": 24,
+          "text": "  <export>"
+        },
+        {
+          "line": 25,
+          "text": "    <build_type>ament_python</build_type>"
+        },
+        {
+          "line": 26,
+          "text": "  </export>"
+        },
+        {
+          "line": 27,
+          "text": "</package>"
+        }
+      ],
+      "buildtool_depend": [],
+      "build_type": [
+        "ament_python"
+      ]
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/setup.py",
+      "sha256": "dca4b41699687f846860cbc92f29e3ab755a0f6a9b0d014cb5a55a34ba89736f",
+      "lines": [
+        {
+          "line": 1,
+          "text": "from glob import glob"
+        },
+        {
+          "line": 2,
+          "text": ""
+        },
+        {
+          "line": 3,
+          "text": "from setuptools import find_packages, setup"
+        },
+        {
+          "line": 4,
+          "text": ""
+        },
+        {
+          "line": 5,
+          "text": "package_name = 'warehouse_motion'"
+        },
+        {
+          "line": 6,
+          "text": ""
+        },
+        {
+          "line": 7,
+          "text": "setup("
+        },
+        {
+          "line": 8,
+          "text": "    name=package_name,"
+        },
+        {
+          "line": 9,
+          "text": "    version='0.1.0',"
+        },
+        {
+          "line": 10,
+          "text": "    packages=find_packages(include=[package_name, f'{package_name}.*']),"
+        },
+        {
+          "line": 11,
+          "text": "    data_files=["
+        },
+        {
+          "line": 12,
+          "text": "        ('share/ament_index/resource_index/packages', ['resource/' + package_name]),"
+        },
+        {
+          "line": 13,
+          "text": "        ('share/' + package_name, ['package.xml']),"
+        },
+        {
+          "line": 14,
+          "text": "        ('share/' + package_name + '/config', glob('config/*.yaml')),"
+        },
+        {
+          "line": 15,
+          "text": "        ('share/' + package_name + '/launch', glob('launch/*.launch.py')),"
+        },
+        {
+          "line": 16,
+          "text": "    ],"
+        },
+        {
+          "line": 17,
+          "text": "    install_requires=['setuptools', 'PyYAML>=6'],"
+        },
+        {
+          "line": 18,
+          "text": "    zip_safe=True,"
+        },
+        {
+          "line": 19,
+          "text": "    maintainer='naeun',"
+        },
+        {
+          "line": 20,
+          "text": "    maintainer_email='skdms8827@s3i.co.kr',"
+        },
+        {
+          "line": 21,
+          "text": "    description='Doosan E0509 pick and place motion with floor safety limits',"
+        },
+        {
+          "line": 22,
+          "text": "    license='Apache-2.0',"
+        },
+        {
+          "line": 23,
+          "text": "    extras_require={'test': ['pytest>=7']},"
+        },
+        {
+          "line": 24,
+          "text": "    entry_points={"
+        },
+        {
+          "line": 25,
+          "text": "        'console_scripts': ["
+        },
+        {
+          "line": 26,
+          "text": "            'motion_server = warehouse_motion.motion_server:main',"
+        },
+        {
+          "line": 27,
+          "text": "            'picking_coordinator = warehouse_motion.picking_coordinator:main',"
+        },
+        {
+          "line": 28,
+          "text": "            'rfid_db_node = warehouse_motion.db.rfid_db_node:main',"
+        },
+        {
+          "line": 29,
+          "text": "        ],"
+        },
+        {
+          "line": 30,
+          "text": "    },"
+        },
+        {
+          "line": 31,
+          "text": ")"
+        }
+      ]
+    },
+    {
+      "path": "e0509_gripper_description/CMakeLists.txt",
+      "sha256": "96cf796719f2019298a486559b22c8d43fd66663991532b595d2388583a59dd9",
+      "lines": [
+        {
+          "line": 1,
+          "text": "cmake_minimum_required(VERSION 3.8)"
+        },
+        {
+          "line": 2,
+          "text": "project(e0509_gripper_description)"
+        },
+        {
+          "line": 3,
+          "text": ""
+        },
+        {
+          "line": 4,
+          "text": "if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES \"Clang\")"
+        },
+        {
+          "line": 5,
+          "text": "  add_compile_options(-Wall -Wextra -Wpedantic)"
+        },
+        {
+          "line": 6,
+          "text": "endif()"
+        },
+        {
+          "line": 7,
+          "text": ""
+        },
+        {
+          "line": 8,
+          "text": "set(CMAKE_CXX_STANDARD 17)"
+        },
+        {
+          "line": 9,
+          "text": ""
+        },
+        {
+          "line": 10,
+          "text": "find_package(ament_cmake REQUIRED)"
+        },
+        {
+          "line": 11,
+          "text": "find_package(rclcpp REQUIRED)"
+        },
+        {
+          "line": 12,
+          "text": "find_package(std_msgs REQUIRED)"
+        },
+        {
+          "line": 13,
+          "text": "find_package(std_srvs REQUIRED)"
+        },
+        {
+          "line": 14,
+          "text": "find_package(sensor_msgs REQUIRED)"
+        },
+        {
+          "line": 15,
+          "text": "find_package(control_msgs REQUIRED)"
+        },
+        {
+          "line": 16,
+          "text": "find_package(trajectory_msgs REQUIRED)"
+        },
+        {
+          "line": 17,
+          "text": "find_package(dsr_msgs2 REQUIRED)"
+        },
+        {
+          "line": 18,
+          "text": ""
+        },
+        {
+          "line": 19,
+          "text": "# Include directories"
+        },
+        {
+          "line": 20,
+          "text": "include_directories(include)"
+        },
+        {
+          "line": 21,
+          "text": ""
+        },
+        {
+          "line": 22,
+          "text": "# Gripper Service Node (C++)"
+        },
+        {
+          "line": 23,
+          "text": "add_executable(gripper_service_node src/gripper_service_node.cpp)"
+        },
+        {
+          "line": 24,
+          "text": "ament_target_dependencies(gripper_service_node"
+        },
+        {
+          "line": 25,
+          "text": "  rclcpp std_msgs std_srvs dsr_msgs2)"
+        },
+        {
+          "line": 26,
+          "text": ""
+        },
+        {
+          "line": 27,
+          "text": "# Gripper Joint Publisher (C++)"
+        },
+        {
+          "line": 28,
+          "text": "add_executable(gripper_joint_publisher src/gripper_joint_publisher.cpp)"
+        },
+        {
+          "line": 29,
+          "text": "ament_target_dependencies(gripper_joint_publisher"
+        },
+        {
+          "line": 30,
+          "text": "  rclcpp std_msgs sensor_msgs control_msgs)"
+        },
+        {
+          "line": 31,
+          "text": ""
+        },
+        {
+          "line": 32,
+          "text": "# Gazebo Bridge (C++)"
+        },
+        {
+          "line": 33,
+          "text": "add_executable(gazebo_bridge src/gazebo_bridge.cpp)"
+        },
+        {
+          "line": 34,
+          "text": "ament_target_dependencies(gazebo_bridge"
+        },
+        {
+          "line": 35,
+          "text": "  rclcpp sensor_msgs trajectory_msgs std_msgs)"
+        },
+        {
+          "line": 36,
+          "text": ""
+        },
+        {
+          "line": 37,
+          "text": "# Install C++ executables"
+        },
+        {
+          "line": 38,
+          "text": "install(TARGETS"
+        },
+        {
+          "line": 39,
+          "text": "  gripper_service_node"
+        },
+        {
+          "line": 40,
+          "text": "  gripper_joint_publisher"
+        },
+        {
+          "line": 41,
+          "text": "  gazebo_bridge"
+        },
+        {
+          "line": 42,
+          "text": "  DESTINATION lib/${PROJECT_NAME}"
+        },
+        {
+          "line": 43,
+          "text": ")"
+        },
+        {
+          "line": 44,
+          "text": ""
+        },
+        {
+          "line": 45,
+          "text": "# Install directories"
+        },
+        {
+          "line": 46,
+          "text": "install(DIRECTORY"
+        },
+        {
+          "line": 47,
+          "text": "  urdf"
+        },
+        {
+          "line": 48,
+          "text": "  launch"
+        },
+        {
+          "line": 49,
+          "text": "  rviz"
+        },
+        {
+          "line": 50,
+          "text": "  config"
+        },
+        {
+          "line": 51,
+          "text": "  DESTINATION share/${PROJECT_NAME}"
+        },
+        {
+          "line": 52,
+          "text": ")"
+        },
+        {
+          "line": 53,
+          "text": ""
+        },
+        {
+          "line": 54,
+          "text": "# Install Python scripts (keep for backwards compatibility / non-realtime scripts)"
+        },
+        {
+          "line": 55,
+          "text": "install(PROGRAMS"
+        },
+        {
+          "line": 56,
+          "text": "  scripts/gripper.py"
+        },
+        {
+          "line": 57,
+          "text": "  scripts/digital_twin_bridge.py"
+        },
+        {
+          "line": 58,
+          "text": "  scripts/robot_slider_control.py"
+        },
+        {
+          "line": 59,
+          "text": "  scripts/curobo_planner_node.py"
+        },
+        {
+          "line": 60,
+          "text": "  scripts/marker_tracking_node.py"
+        },
+        {
+          "line": 61,
+          "text": "  scripts/object_tracking_node.py"
+        },
+        {
+          "line": 62,
+          "text": "  DESTINATION lib/${PROJECT_NAME}"
+        },
+        {
+          "line": 63,
+          "text": ")"
+        },
+        {
+          "line": 64,
+          "text": ""
+        },
+        {
+          "line": 65,
+          "text": "ament_package()"
+        }
+      ]
+    },
+    {
+      "path": "e0509_gripper_description/package.xml",
+      "sha256": "bbdcf3d10b044f2fe79c337e491694a6b680deac5804be57ef45ca65ef026268",
+      "lines": [
+        {
+          "line": 1,
+          "text": "<?xml version=\"1.0\"?>"
+        },
+        {
+          "line": 2,
+          "text": "<?xml-model href=\"http://download.ros.org/schema/package_format3.xsd\" schematypens=\"http://www.w3.org/2001/XMLSchema\"?>"
+        },
+        {
+          "line": 3,
+          "text": "<package format=\"3\">"
+        },
+        {
+          "line": 4,
+          "text": "  <name>e0509_gripper_description</name>"
+        },
+        {
+          "line": 5,
+          "text": "  <version>0.1.0</version>"
+        },
+        {
+          "line": 6,
+          "text": "  <description>Doosan E0509 with RH-P12-RN-A Gripper</description>"
+        },
+        {
+          "line": 7,
+          "text": "  <maintainer email=\"fhekwn549@naver.com\">fhekwn549</maintainer>"
+        },
+        {
+          "line": 8,
+          "text": "  <license>Apache-2.0</license>"
+        },
+        {
+          "line": 9,
+          "text": ""
+        },
+        {
+          "line": 10,
+          "text": "  <buildtool_depend>ament_cmake</buildtool_depend>"
+        },
+        {
+          "line": 11,
+          "text": ""
+        },
+        {
+          "line": 12,
+          "text": "  <depend>rclcpp</depend>"
+        },
+        {
+          "line": 13,
+          "text": "  <depend>std_msgs</depend>"
+        },
+        {
+          "line": 14,
+          "text": "  <depend>std_srvs</depend>"
+        },
+        {
+          "line": 15,
+          "text": "  <depend>sensor_msgs</depend>"
+        },
+        {
+          "line": 16,
+          "text": "  <depend>control_msgs</depend>"
+        },
+        {
+          "line": 17,
+          "text": "  <depend>trajectory_msgs</depend>"
+        },
+        {
+          "line": 18,
+          "text": "  <depend>dsr_msgs2</depend>"
+        },
+        {
+          "line": 19,
+          "text": ""
+        },
+        {
+          "line": 20,
+          "text": "  <depend>urdf</depend>"
+        },
+        {
+          "line": 21,
+          "text": "  <depend>xacro</depend>"
+        },
+        {
+          "line": 22,
+          "text": "  <depend>robot_state_publisher</depend>"
+        },
+        {
+          "line": 23,
+          "text": "  <depend>joint_state_publisher_gui</depend>"
+        },
+        {
+          "line": 24,
+          "text": "  <depend>rviz2</depend>"
+        },
+        {
+          "line": 25,
+          "text": "  <depend>dsr_description2</depend>"
+        },
+        {
+          "line": 26,
+          "text": "  <depend>rh_p12_rn_a_description</depend>"
+        },
+        {
+          "line": 27,
+          "text": ""
+        },
+        {
+          "line": 28,
+          "text": "  <export>"
+        },
+        {
+          "line": 29,
+          "text": "    <build_type>ament_cmake</build_type>"
+        },
+        {
+          "line": 30,
+          "text": "  </export>"
+        },
+        {
+          "line": 31,
+          "text": "</package>"
+        }
+      ],
+      "buildtool_depend": [
+        "ament_cmake"
+      ],
+      "build_type": [
+        "ament_cmake"
+      ]
+    }
+  ],
+  "control_evidence": [
+    {
+      "path": "robotArm_Controller/docs/integration-contract.md",
+      "line": 50,
+      "text": "  \"grasp_posx\": [400, 0, 200, 0, 180, 0],"
+    },
+    {
+      "path": "robotArm_Controller/docs/integration-contract.md",
+      "line": 53,
+      "text": "  \"orientation\": \"zyz_deg\","
+    },
+    {
+      "path": "robotArm_Controller/docs/integration-contract.md",
+      "line": 58,
+      "text": "- `grasp_posx`: 유한한 수 6개, `[x, y, z, a, b, c]`. 자세는 두산 ZYZ 도 단위이며 RPY로 해석하지 않습니다."
+    },
+    {
+      "path": "robotArm_Controller/docs/ubuntu-jazzy-gripper.md",
+      "line": 65,
+      "text": "position_pulses=0 current=0 moving=0 moving_status=49 input_voltage_tenths=241"
+    },
+    {
+      "path": "robotArm_Controller/HANDOFF.md",
+      "line": 50,
+      "text": "- `warehouse_motion/safe_move.py`: `SafeMover(z_min, backend, max_vel, max_acc, logger)`"
+    },
+    {
+      "path": "robotArm_Controller/HANDOFF.md",
+      "line": 51,
+      "text": "  - `movel(pos, vel, acc, ref, mod=ABS, radius=0)` — ref 필수. ABS 는 DR_BASE 만, REL 은 DR_BASE/DR_TOOL"
+    },
+    {
+      "path": "robotArm_Controller/HANDOFF.md",
+      "line": 52,
+      "text": "    (TOOL 은 현재 자세 ZYZ 회전으로 base 이동량 계산). 그 외 ref 는 차단"
+    },
+    {
+      "path": "robotArm_Controller/HANDOFF.md",
+      "line": 53,
+      "text": "  - `movej(pos, vel, acc, mod=ABS, radius=0)` — REL 은 현재 posj 더함 → fkin(DR_BASE) → z 검사, fkin 실패 시 차단"
+    },
+    {
+      "path": "robotArm_Controller/HANDOFF.md",
+      "line": 64,
+      "text": "  - 좌표: `aux_control/get_current_posx`(ref → task_pos_info[0][0:6]), `aux_control/get_current_posj`, `aux_control/get_current_tool_flange_posx`"
+    },
+    {
+      "path": "robotArm_Controller/HANDOFF.md",
+      "line": 65,
+      "text": "  - 기구학: `motion/fkin`(pos[6], ref → conv_posx[6]), `motion/ikin`"
+    },
+    {
+      "path": "robotArm_Controller/HANDOFF.md",
+      "line": 72,
+      "text": "- `get_current_posx(ref)` → `(posx, sol)`, `fkin(posj, ref)` → posx"
+    },
+    {
+      "path": "robotArm_Controller/README.md",
+      "line": 81,
+      "text": "    mode:=real host:=<ROBOT_IP> port:=12345 model:=e0509"
+    },
+    {
+      "path": "robotArm_Controller/README.md",
+      "line": 85,
+      "text": "    mode:=virtual host:=127.0.0.1 model:=e0509"
+    },
+    {
+      "path": "robotArm_Controller/README.md",
+      "line": 106,
+      "text": "- 좌표는 **직접 교시**로 따고 YAML에 저장 (`posx`, `posj` 둘 다 기록)"
+    },
+    {
+      "path": "robotArm_Controller/README.md",
+      "line": 177,
+      "text": "  - 상대 이동 → 현재 posx를 읽어 도착 위치 계산 후 검사"
+    },
+    {
+      "path": "robotArm_Controller/README.md",
+      "line": 178,
+      "text": "- `movej` → fkin(정기구학) 서비스로 목표 관절값을 posx로 변환해 z 검사 (없으면 대안 검토)"
+    },
+    {
+      "path": "robotArm_Controller/README.md",
+      "line": 203,
+      "text": "| 4 | 교시 도우미 | 엔터 → 현재 posx/posj 읽기 → 이름 입력 → YAML 저장. 바닥 측정 모드(최대/최소/차이), NFC 돌출 측정 안내 | ⬜ |"
+    },
+    {
+      "path": "robotArm_Controller/README.md",
+      "line": 222,
+      "text": "| 현재 좌표 | `aux_control/get_current_posx` | `ref` (0=base) → `task_pos_info[0][0:6]` |"
+    },
+    {
+      "path": "robotArm_Controller/README.md",
+      "line": 223,
+      "text": "| | `aux_control/get_current_posj` | → `pos[6]` |"
+    },
+    {
+      "path": "robotArm_Controller/README.md",
+      "line": 224,
+      "text": "| | `aux_control/get_current_tool_flange_posx` | `ref` → 플랜지 `pos[6]` |"
+    },
+    {
+      "path": "robotArm_Controller/README.md",
+      "line": 225,
+      "text": "| 정기구학 | `motion/fkin` | `pos[6]`(posj), `ref` → `conv_posx[6]` |"
+    },
+    {
+      "path": "robotArm_Controller/README.md",
+      "line": 226,
+      "text": "| 역기구학 | `motion/ikin` | posx, `sol_space`, `ref` → `conv_posj[6]` |"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/include/warehouse_gripper/modbus.hpp",
+      "line": 33,
+      "text": "inline Frame read_registers(uint8_t id, uint16_t address, uint16_t count)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/include/warehouse_gripper/modbus.hpp",
+      "line": 39,
+      "text": "inline Frame write_register(uint8_t id, uint16_t address, uint16_t value)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/include/warehouse_gripper/modbus.hpp",
+      "line": 75,
+      "text": "inline uint16_t register_word(const Frame & reply, size_t index)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/include/warehouse_gripper/modbus.hpp",
+      "line": 84,
+      "text": "  const auto mode = register_word(exchange(read_registers(id, 5, 1), 7), 0) >> 8;"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/include/warehouse_gripper/modbus.hpp",
+      "line": 89,
+      "text": "  exchange(write_register(id, 275, 400), 8);"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/include/warehouse_gripper/modbus.hpp",
+      "line": 92,
+      "text": "  exchange(write_register(id, 256, 1), 8);"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/include/warehouse_gripper/modbus.hpp",
+      "line": 100,
+      "text": "  int moving_status;"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/include/warehouse_gripper/modbus.hpp",
+      "line": 105,
+      "text": "  const uint32_t raw_position = register_word(reply, 5) |"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/include/warehouse_gripper/modbus.hpp",
+      "line": 106,
+      "text": "    (static_cast<uint32_t>(register_word(reply, 6)) << 16);"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/include/warehouse_gripper/modbus.hpp",
+      "line": 109,
+      "text": "  const int raw_current = register_word(reply, 2);"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/include/warehouse_gripper/modbus.hpp",
+      "line": 111,
+      "text": "  const auto flags = register_word(reply, 0);"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/include/warehouse_gripper/modbus.hpp",
+      "line": 116,
+      "text": "  // Register 285 packs Moving(570) LOW and Moving Status(571) HIGH."
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/include/warehouse_gripper/rtu_session.hpp",
+      "line": 14,
+      "text": "  : std::runtime_error(\"Modbus response timeout: register=\" +"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/include/warehouse_gripper/rtu_session.hpp",
+      "line": 71,
+      "text": "      return register_word(serial.exchange(read_registers(1, 296, 1), 7), 0);"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/README.md",
+      "line": 37,
+      "text": "지금은 `moving=0 moving_status=49`로 분리합니다. 이는 **완료 판정 오류**이며, 처음부터"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/README.md",
+      "line": 82,
+      "text": "상태 응답 예시는 `position_pulses=0 current=0 moving=0 moving_status=49 input_voltage_tenths=241`입니다."
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/README.md",
+      "line": 83,
+      "text": "`moving_status` 값은 프로파일 상태에 따라 달라집니다."
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/src/gripper_controller.cpp",
+      "line": 25,
+      "text": "constexpr uint16_t feedback_register = 285;"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/src/gripper_controller.cpp",
+      "line": 33,
+      "text": "        robot_, port_, 57600, BYTE_SIZE_EIGHTBITS, PARITY_CHECK_NONE, STOPBITS_ONE, 0))"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/src/gripper_controller.cpp",
+      "line": 73,
+      "text": "  const auto reply = serial.exchange(read_registers(slave_id, feedback_register, 7), 19);"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/src/gripper_controller.cpp",
+      "line": 75,
+      "text": "  const auto fault = register_word(serial.exchange(read_registers(slave_id, 259, 1), 7), 0) & 0xff;"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/src/gripper_controller.cpp",
+      "line": 82,
+      "text": "    \" moving_status=\" + std::to_string(feedback.moving_status) +"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/src/gripper_controller.cpp",
+      "line": 119,
+      "text": "      \"DART-compatible RH-P12-RN(A): port=%d, 57600 8N1, ID=1, 400mA, open=0, close=740; \""
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/src/gripper_controller.cpp",
+      "line": 154,
+      "text": "    return get_node()->create_service<Trigger>("
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/test/test_protocol.cpp",
+      "line": 55,
+      "text": "  require(with_crc(write_register(1, 256, 1)) =="
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/test/test_protocol.cpp",
+      "line": 57,
+      "text": "  require(with_crc(write_register(1, 275, 400)) =="
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/test/test_protocol.cpp",
+      "line": 69,
+      "text": "  const auto write = write_register(1, 275, 400);"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/test/test_protocol.cpp",
+      "line": 91,
+      "text": "  const auto request = read_registers(1, 285, 7);"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/test/test_protocol.cpp",
+      "line": 95,
+      "text": "  require(feedback.moving_status == 0x31, \"Moving Status lost\");"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/test/test_protocol.cpp",
+      "line": 114,
+      "text": "  require(flange::open(old, 1, 57600, eight, none, one, 0), \"Legacy open failed\");"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/test/test_protocol.cpp",
+      "line": 115,
+      "text": "  require(old.baud == 57600, \"Legacy API interpreted port as baud\");"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/test/test_protocol.cpp",
+      "line": 120,
+      "text": "  rejects([&] {flange::open(old, 2, 57600, eight, none, one, 0);});"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/test/test_protocol.cpp",
+      "line": 123,
+      "text": "  require(flange::open(current, 2, 57600, eight, none, one, 0), \"Port-aware open failed\");"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/test/test_protocol.cpp",
+      "line": 124,
+      "text": "  require(current.baud == 57600 && current.opened_port == 2, \"Port-aware arguments swapped\");"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/test/test_protocol.cpp",
+      "line": 139,
+      "text": "  require(sent == std::vector<Frame>({read_registers(1, 5, 1),"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/test/test_protocol.cpp",
+      "line": 140,
+      "text": "      write_register(1, 275, 400), goal_position(1, 740), write_register(1, 256, 1)}),"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/test/test_rtu_session.cpp",
+      "line": 77,
+      "text": "      require(std::string(error.what()).find(\"register=40297 received_bytes=0\") != std::string::npos,"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/test/test_rtu_session.cpp",
+      "line": 78,
+      "text": "        \"Timeout lost diagnostic register or byte count\");"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/test/test_rtu_session.cpp",
+      "line": 95,
+      "text": "      write_session.exchange(write_register(1, 256, 1), 8);"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_gripper/test/test_rtu_session.cpp",
+      "line": 105,
+      "text": "      incomplete_session.exchange(read_registers(1, 296, 1), 7);"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/config/poses.yaml",
+      "line": 3,
+      "text": "# - posx: [x, y, z, rx, ry, rz]  (두산 ZYZ 오일러)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/config/poses.yaml",
+      "line": 4,
+      "text": "# - posj: [j1, j2, j3, j4, j5, j6]"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/config/poses.yaml",
+      "line": 25,
+      "text": "  max_vel: 30.0"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/config/poses.yaml",
+      "line": 26,
+      "text": "  max_acc: 30.0"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/config/poses.yaml",
+      "line": 30,
+      "text": "    posx: [373.0, 0.0, 285.0, 12.44, 180.0, 12.44]"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/config/poses.yaml",
+      "line": 31,
+      "text": "    posj: [0.0, 0.0, 90.0, 0.0, 90.0, 0.0]"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/config/poses.yaml",
+      "line": 34,
+      "text": "    posx: [-323.0, 280.0, 285.0, 44.28, 180.0, -135.72]"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/config/poses.yaml",
+      "line": 35,
+      "text": "    posj: [139.08, 8.40, 80.99, 0.0, 90.61, -40.92]"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/config/poses.yaml",
+      "line": 38,
+      "text": "    posx: [-323.0, 280.0, 50.0, 133.03, 180.0, -46.97]"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/config/poses.yaml",
+      "line": 39,
+      "text": "    posj: [139.08, 19.13, 105.95, 0.0, 54.91, -40.92]"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/config/poses.yaml",
+      "line": 42,
+      "text": "    posx: [0.0, 373.0, 285.0, 135.0, 180.0, 45.0]"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/config/poses.yaml",
+      "line": 43,
+      "text": "    posj: [90.0, 0.0, 90.0, 0.0, 90.0, 0.0]"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/config/poses.yaml",
+      "line": 49,
+      "text": "    posx: [-373.0, 0.0, 85.0, 3.26, 180.0, -176.74]"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/config/poses.yaml",
+      "line": 50,
+      "text": "    posj: [180.0, 8.56, 113.11, 0.0, 58.33, 0.0]"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/config/poses.yaml",
+      "line": 53,
+      "text": "    posx: null"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/config/poses.yaml",
+      "line": 54,
+      "text": "    posj: null"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/config/poses.yaml",
+      "line": 57,
+      "text": "    posx: null"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/config/poses.yaml",
+      "line": 58,
+      "text": "    posj: null"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/config/poses.yaml",
+      "line": 61,
+      "text": "    posx: null"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/config/poses.yaml",
+      "line": 62,
+      "text": "    posj: null"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/offline_picking/contracts.py",
+      "line": 20,
+      "text": "    grasp_posx: tuple"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/offline_picking/contracts.py",
+      "line": 23,
+      "text": "    orientation: str = 'zyz_deg'"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/offline_picking/contracts.py",
+      "line": 31,
+      "text": "        if self.frame_id != 'base' or self.position_unit != 'mm' or self.orientation != 'zyz_deg':"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/offline_picking/contracts.py",
+      "line": 32,
+      "text": "            raise ValueError('요청 좌표는 Base / mm / 두산 ZYZ degree여야 합니다')"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/offline_picking/contracts.py",
+      "line": 35,
+      "text": "        object.__setattr__(self, 'grasp_posx', tuple(pose6(self.grasp_posx, 'grasp_posx')))"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/offline_picking/mock_demo.py",
+      "line": 57,
+      "text": "    def movel(self, pos, vel, acc, ref, mod, radius):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/offline_picking/mock_scenario.py",
+      "line": 139,
+      "text": "                    execute_pick_place(mover, grip, profile, mock_plan(request.grasp_posx, slot),"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/offline_picking/pick_place.py",
+      "line": 12,
+      "text": "    All Cartesian targets are Base/mm/Doosan ZYZ-degrees. Completion verifies"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_gripper_feedback.py",
+      "line": 16,
+      "text": "            'moving_status=49 input_voltage_tenths=241')"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_gripper_feedback.py",
+      "line": 19,
+      "text": "def test_moving_status_does_not_prevent_open_completion():"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_input_validation.py",
+      "line": 40,
+      "text": "@pytest.mark.parametrize('which', ['max_vel', 'max_acc'])"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_input_validation.py",
+      "line": 43,
+      "text": "    kwargs = dict(max_vel=30, max_acc=30)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_input_validation.py",
+      "line": 45,
+      "text": "    speed = (999, 30) if which == 'max_vel' else (30, 999)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_input_validation.py",
+      "line": 66,
+      "text": "    pose = {'posx': [400, 0, 300, 0, 180, 0], 'taught': 'false'}"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_input_validation.py",
+      "line": 85,
+      "text": "    backend._dr = SimpleNamespace(get_current_posx=lambda ref: reply)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_input_validation.py",
+      "line": 86,
+      "text": "    assert backend.get_current_posx(DR_BASE) == expected"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_input_validation.py",
+      "line": 94,
+      "text": "    backend._dr = SimpleNamespace(fkin=lambda posj, ref: reply)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 12,
+      "text": "    MotionError, SafeMover, SafetyLimitError, tool_offset_to_base, zyz_rotation,"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 20,
+      "text": "    def __init__(self, posx=None, posj=None, fkin_result=None, ret=0):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 21,
+      "text": "        self.posx = posx if posx is not None else [400.0, 0.0, 200.0] + DOWN"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 22,
+      "text": "        self.posj = posj if posj is not None else [0.0, 0.0, 90.0, 0.0, 90.0, 0.0]"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 28,
+      "text": "    def get_current_posx(self, ref):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 30,
+      "text": "        return None if self.posx is None else list(self.posx)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 32,
+      "text": "    def get_current_posj(self):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 33,
+      "text": "        return None if self.posj is None else list(self.posj)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 35,
+      "text": "    def fkin(self, posj, ref):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 36,
+      "text": "        self.fkin_calls.append((list(posj), ref))"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 38,
+      "text": "        return r(posj) if callable(r) else r"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 40,
+      "text": "    def movel(self, pos, vel, acc, ref, mod, radius):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 44,
+      "text": "    def movej(self, pos, vel, acc, mod, radius):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 58,
+      "text": "    return SafeMover(Z_MIN, backend, max_vel=30, max_acc=30, logger=logger)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 99,
+      "text": "    be = FakeBackend(posx=[400, 0, 150] + DOWN)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 111,
+      "text": "    be = FakeBackend(posx=[400, 0, 150] + DOWN)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 118,
+      "text": "    be = FakeBackend(posx=[400, 0, 150] + DOWN)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 125,
+      "text": "def test_movel_rel_fails_closed_when_posx_unreadable():"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 127,
+      "text": "    be.posx = None"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 157,
+      "text": "    be = FakeBackend(posj=[10, 0, 90, 0, 90, 0], fkin_result=[373, 0, 405] + DOWN)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 199,
+      "text": "def test_zyz_identity():"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 200,
+      "text": "    r = zyz_rotation(0, 0, 0)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 211,
+      "text": "def test_zyz_rotation_is_orthonormal():"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_safe_move.py",
+      "line": 212,
+      "text": "    r = zyz_rotation(30, 70, -45)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/test/test_scenario.py",
+      "line": 150,
+      "text": "    dict(grasp_posx=[0, 0, float('nan'), 0, 0, 0]), dict(slot_id=True),"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/config_loader.py",
+      "line": 115,
+      "text": "    if pose.get('posx') is None and pose.get('posj') is None:"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/config_loader.py",
+      "line": 116,
+      "text": "        raise ConfigError(f'{label} 의 posx/posj 가 비어 있습니다')"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/config_loader.py",
+      "line": 118,
+      "text": "        for key in ('posx', 'posj'):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/db/rfid_db_node.py",
+      "line": 29,
+      "text": "        self.srv = self.create_service("
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/motion_server.py",
+      "line": 29,
+      "text": "        self.max_vel = motion.get('max_vel', 30.0)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/motion_server.py",
+      "line": 30,
+      "text": "        self.max_acc = motion.get('max_acc', 30.0)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/motion_server.py",
+      "line": 37,
+      "text": "            self.max_vel, self.max_acc, self.get_logger(),"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/motion_server.py",
+      "line": 39,
+      "text": "        self.robot_system = self.io.create_client("
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/motion_server.py",
+      "line": 46,
+      "text": "            name: self.io.create_client(Trigger, f'{gripper_prefix}/{name}')"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/motion_server.py",
+      "line": 49,
+      "text": "        self.create_service(MoveToPose, '/warehouse/move_to_pose', self.handle_move_to_pose)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/motion_server.py",
+      "line": 50,
+      "text": "        self.create_service(PickPlace, '/warehouse/pick_place', self.handle_pick_place)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/motion_server.py",
+      "line": 57,
+      "text": "    def move_line(self, posx):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/motion_server.py",
+      "line": 58,
+      "text": "        self.mover.movel(posx, vel=self.max_vel, acc=self.max_acc, ref=DR_BASE)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/motion_server.py",
+      "line": 62,
+      "text": "            scan = c.get_pose(self.poses_cfg, 'label_scan', self.mode)['posx']"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/motion_server.py",
+      "line": 64,
+      "text": "                approach = c.get_pose(self.poses_cfg, 'label_scan_approach', self.mode)['posx']"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/motion_server.py",
+      "line": 70,
+      "text": "        if pose.get('posj') is not None:"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/motion_server.py",
+      "line": 71,
+      "text": "            self.mover.movej(pose['posj'], vel=self.max_vel, acc=self.max_acc)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/motion_server.py",
+      "line": 73,
+      "text": "            self.move_line(pose['posx'])"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/motion_server.py",
+      "line": 115,
+      "text": "        slot = c.get_box_slot(self.poses_cfg, request.box_slot, self.mode)['posx']"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/motion_server.py",
+      "line": 116,
+      "text": "        home = c.get_pose(self.poses_cfg, 'home', self.mode)['posx']"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/motion_server.py",
+      "line": 117,
+      "text": "        via = c.get_pose(self.poses_cfg, 'via_point', self.mode)['posx']"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/picking_coordinator.py",
+      "line": 28,
+      "text": "        self.move = self.io.create_client(MoveToPose, '/warehouse/move_to_pose')"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/picking_coordinator.py",
+      "line": 29,
+      "text": "        self.lookup = self.io.create_client(QueryRfidTag, '/warehouse/query_rfid_tag')"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/picking_coordinator.py",
+      "line": 30,
+      "text": "        self.pick = self.io.create_client(PickPlace, '/warehouse/pick_place')"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/picking_coordinator.py",
+      "line": 32,
+      "text": "        self.cycle = self.create_service(Trigger, '/warehouse/run_pick_cycle', self.run_cycle)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/picking_coordinator.py",
+      "line": 41,
+      "text": "        subscription = self.io.create_subscription(String, self.uid_topic, receive, 1)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/ros_motion_backend.py",
+      "line": 2,
+      "text": "from dsr_msgs2.srv import Fkin, GetCurrentPosj, GetCurrentPosx, MoveJoint, MoveLine"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/ros_motion_backend.py",
+      "line": 11,
+      "text": "        self.current_x = node.create_client(GetCurrentPosx, f'{prefix}/aux_control/get_current_posx')"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/ros_motion_backend.py",
+      "line": 12,
+      "text": "        self.current_j = node.create_client(GetCurrentPosj, f'{prefix}/aux_control/get_current_posj')"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/ros_motion_backend.py",
+      "line": 13,
+      "text": "        self.kinematics = node.create_client(Fkin, f'{prefix}/motion/fkin')"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/ros_motion_backend.py",
+      "line": 14,
+      "text": "        self.joint = node.create_client(MoveJoint, f'{prefix}/motion/move_joint')"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/ros_motion_backend.py",
+      "line": 15,
+      "text": "        self.line = node.create_client(MoveLine, f'{prefix}/motion/move_line')"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/ros_motion_backend.py",
+      "line": 17,
+      "text": "    def get_current_posx(self, ref):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/ros_motion_backend.py",
+      "line": 18,
+      "text": "        result = call_service(self.executor, self.current_x, GetCurrentPosx.Request(ref=ref), 3.0)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/ros_motion_backend.py",
+      "line": 23,
+      "text": "    def get_current_posj(self):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/ros_motion_backend.py",
+      "line": 24,
+      "text": "        result = call_service(self.executor, self.current_j, GetCurrentPosj.Request(), 3.0)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/ros_motion_backend.py",
+      "line": 27,
+      "text": "    def fkin(self, posj, ref):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/ros_motion_backend.py",
+      "line": 28,
+      "text": "        request = Fkin.Request(pos=[float(value) for value in posj], ref=ref)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/ros_motion_backend.py",
+      "line": 30,
+      "text": "        return list(result.conv_posx) if result.success else None"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/ros_motion_backend.py",
+      "line": 32,
+      "text": "    def movej(self, pos, vel, acc, mod, radius):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/ros_motion_backend.py",
+      "line": 35,
+      "text": "            radius=float(radius), mode=mod, sync_type=0,"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/ros_motion_backend.py",
+      "line": 40,
+      "text": "    def movel(self, pos, vel, acc, ref, mod, radius):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/ros_motion_backend.py",
+      "line": 43,
+      "text": "            ref=ref, radius=float(radius), mode=mod, sync_type=0,"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 9,
+      "text": "  - movel 상대 이동: 현재 posx 를 읽어 도착 위치를 계산한 뒤 검사 (DR_TOOL 은 현재 자세로 회전 변환)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 10,
+      "text": "  - movej: 목표 관절값을 fkin(정기구학)으로 posx 로 바꿔 검사. fkin 실패 시에도 차단 (fail-closed)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 11,
+      "text": "  - 속도/가속도: vel, acc 를 반드시 명시해야 하고 max_vel / max_acc 를 넘으면 차단"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 46,
+      "text": "def zyz_rotation(a_deg, b_deg, c_deg):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 47,
+      "text": "    \"\"\"두산 posx 의 (rx, ry, rz) = ZYZ 오일러 각 → 3x3 회전행렬 Rz(a)·Ry(b)·Rz(c).\"\"\""
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 59,
+      "text": "def tool_offset_to_base(current_posx, delta_xyz):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 61,
+      "text": "    r = zyz_rotation(*current_posx[3:6])"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 69,
+      "text": "      get_current_posx(ref) -> [6]"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 70,
+      "text": "      get_current_posj() -> [6]"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 71,
+      "text": "      fkin(posj, ref) -> [6] 또는 None"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 72,
+      "text": "      movel(pos, vel, acc, ref, mod, radius) -> 0 성공 / 그 외 실패"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 73,
+      "text": "      movej(pos, vel, acc, mod, radius) -> 0 성공 / 그 외 실패"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 76,
+      "text": "    def __init__(self, z_min, backend, max_vel, max_acc, logger=None):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 79,
+      "text": "        self.max_vel = finite_number(max_vel, 'max_vel')"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 80,
+      "text": "        self.max_acc = finite_number(max_acc, 'max_acc')"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 81,
+      "text": "        if self.max_vel <= 0 or self.max_acc <= 0:"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 87,
+      "text": "    def movel(self, pos, vel, acc, ref, mod=DR_MV_MOD_ABS, radius=0.0):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 93,
+      "text": "        ret = self.backend.movel(pos, vel, acc, ref, mod, radius)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 97,
+      "text": "    def movej(self, pos, vel, acc, mod=DR_MV_MOD_ABS, radius=0.0):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 102,
+      "text": "        self._check_z(target_x, f'movej {_MOD_NAMES.get(mod, mod)} {pos} (posj {target_j})')"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 103,
+      "text": "        ret = self.backend.movej(pos, vel, acc, mod, radius)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 110,
+      "text": "        \"\"\"movel 의 도착 posx(base 기준)를 계산한다.\"\"\""
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 120,
+      "text": "            cur = self._read_posx()"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 130,
+      "text": "        \"\"\"movej 의 도착 posj 와, fkin 으로 구한 도착 posx(base) 를 계산한다.\"\"\""
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 134,
+      "text": "            cur = self.backend.get_current_posj()"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 136,
+      "text": "                raise SafetyLimitError('현재 posj 를 읽지 못해 movej 를 차단합니다')"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 137,
+      "text": "            cur = _vec6(cur, '현재 posj')"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 149,
+      "text": "    def _read_posx(self):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 150,
+      "text": "        cur = self.backend.get_current_posx(DR_BASE)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 152,
+      "text": "            raise SafetyLimitError('현재 posx 를 읽지 못해 상대 이동을 차단합니다')"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 153,
+      "text": "        return _vec6(cur, '현재 posx')"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 155,
+      "text": "    def _check_z(self, target_posx, desc):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 156,
+      "text": "        z = target_posx[2]"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 164,
+      "text": "        for name, val, lim in (('vel', vel, self.max_vel), ('acc', acc, self.max_acc)):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 207,
+      "text": "    def get_current_posx(self, ref):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 208,
+      "text": "        ret = self._dr.get_current_posx(ref)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 213,
+      "text": "    def get_current_posj(self):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 214,
+      "text": "        return _as_list(self._dr.get_current_posj())"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 216,
+      "text": "    def fkin(self, posj, ref):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 217,
+      "text": "        return _as_list(self._dr.fkin(posj, ref))"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 219,
+      "text": "    def movel(self, pos, vel, acc, ref, mod, radius):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 220,
+      "text": "        return self._dr.movel(pos, vel=vel, acc=acc, radius=radius, ref=ref, mod=mod)"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 222,
+      "text": "    def movej(self, pos, vel, acc, mod, radius):"
+    },
+    {
+      "path": "robotArm_Controller/warehouse_motion/warehouse_motion/safe_move.py",
+      "line": 223,
+      "text": "        return self._dr.movej(pos, vel=vel, acc=acc, radius=radius, mod=mod)"
+    }
+  ]
+}

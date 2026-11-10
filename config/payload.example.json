@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "simulation_only": true,
+  "request_id": "mock-pick-001",
+  "camera": {
+    "session_id": "mock-session",
+    "camera_generation": 1,
+    "camera_id": "mock-camera",
+    "width": 640,
+    "height": 480
+  },
+  "frame_id": 1,
+  "captured_at": "2026-11-10T01:55:13.634540+00:00",
+  "model_version": "mock-model-v1",
+  "object_index": 0,
+  "detection": {
+    "class_id": 0,
+    "label": "snack_box",
+    "confidence": 0.95,
+    "xyxy": [
+      280.0,
+      200.0,
+      360.0,
+      280.0
+    ],
+    "center_px": [
+      320.0,
+      240.0
+    ]
+  },
+  "calibration_revision": "mock-only-v1",
+  "box_slot": 1
+}

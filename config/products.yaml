@@ -1,0 +1,102 @@
+# 상품 설정 (단위: mm, deg / 기준 좌표계: base)
+#
+# - x, y: YOLO 연동 전 임시 고정 좌표. YOLO 연동 후에는 호모그래피 변환값으로 대체된다.
+# - grasp_height_from_floor: 바닥 기준 집는 높이. 실행 시 z = floor_z + grasp_height_from_floor
+#   계산된 z 가 하한선보다 낮으면 그 상품은 실행하지 않고 보고한다.
+# - rz: 손목 회전 (1차 버전은 고정 방향 가정)
+# - grip_force: 이전 예제의 미사용 필드. 실제 파지 검증에는 real.grasp_feedback을 사용한다.
+# - taught: 실물에 상품을 놓고 직접 교시했으면 true.
+#
+# ⚠️ 아래 virtual 값은 가상 모드 테스트용 임의값이다. 실물 로봇 좌표가 아니다.
+#    실물 모드는 real 값(교시값)만 사용하며, taught: false 인 상품은 실행을 거부한다.
+
+products:
+  snack_box:          # 곽과자 (12cm = 120mm)
+    real:
+      x: 491.5        # 실물 직접 교시 좌표
+      y: -5.0
+      rz: 0.0
+      grasp_height_from_floor: 120.0
+      taught: true
+    virtual: {x: 491.5, y: -5.0, rz: 0.0, grasp_height_from_floor: 120.0}
+    grip_force: null
+
+  snack_pepero:       # DB yolo_class_name 호환 (빼빼로)
+    real:
+      x: 491.5        # 실물 직접 교시 좌표
+      y: -5.0
+      rz: 0.0
+      grasp_height_from_floor: 120.0
+      taught: true
+    virtual: {x: 491.5, y: -5.0, rz: 0.0, grasp_height_from_floor: 120.0}
+    grip_force: null
+
+  pet_bottle:         # 페트 음료 (15cm = 150mm)
+    real:
+      x: 450.0        # YOLO 연동 전 테스트용 임시 좌표
+      y: 50.0
+      rz: 0.0
+      grasp_height_from_floor: 150.0
+      taught: true
+    virtual: {x: 450.0, y: 50.0, rz: 0.0, grasp_height_from_floor: 150.0}
+    grip_force: null
+
+  beverage_pet:       # DB yolo_class_name 호환 (제로콜라)
+    real:
+      x: 450.0
+      y: 50.0
+      rz: 0.0
+      grasp_height_from_floor: 150.0
+      taught: true
+    virtual: {x: 450.0, y: 50.0, rz: 0.0, grasp_height_from_floor: 150.0}
+    grip_force: null
+
+  can:                # 캔 (3cm = 30mm)
+    real:
+      x: 450.0        # YOLO 연동 전 테스트용 임시 좌표
+      y: -50.0
+      rz: 0.0
+      grasp_height_from_floor: 30.0
+      taught: true
+    virtual: {x: 450.0, y: -50.0, rz: 0.0, grasp_height_from_floor: 30.0}
+    grip_force: null
+
+  canned_meat:        # DB yolo_class_name 호환 (스팸)
+    real:
+      x: 450.0
+      y: -50.0
+      rz: 0.0
+      grasp_height_from_floor: 30.0
+      taught: true
+    virtual: {x: 450.0, y: -50.0, rz: 0.0, grasp_height_from_floor: 30.0}
+    grip_force: null
+
+  wet_tissue:         # 물티슈 (3cm = 30mm)
+    real:
+      x: 450.0        # YOLO 연동 전 테스트용 임시 좌표
+      y: -150.0
+      rz: 0.0
+      grasp_height_from_floor: 30.0
+      taught: true
+    virtual: {x: 450.0, y: -150.0, rz: 0.0, grasp_height_from_floor: 30.0}
+    grip_force: null
+
+  wet_wipes:          # DB yolo_class_name 호환 (물티슈)
+    real:
+      x: 450.0
+      y: -150.0
+      rz: 0.0
+      grasp_height_from_floor: 30.0
+      taught: true
+    virtual: {x: 450.0, y: -150.0, rz: 0.0, grasp_height_from_floor: 30.0}
+    grip_force: null
+
+  doll:               # 인형 (가상 테스트용, 실물 교시 제외)
+    real:
+      x: null
+      y: null
+      rz: null
+      grasp_height_from_floor: null
+      taught: false
+    virtual: {x: 550.0, y: -100.0, rz: 0.0, grasp_height_from_floor: 50.0}
+    grip_force: null

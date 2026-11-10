@@ -1,0 +1,337 @@
+{
+  "communication": {
+    "legacy_robot_ip": null,
+    "legacy_robot_port": 12345,
+    "web_robot_ip": "110.120.1.63",
+    "web_robot_port": 12345,
+    "namespace": "dsr01",
+    "rosbridge_port": 9090,
+    "transport": "Doosan driver shared DRFL connection; ROS 2 services; no invented raw TCP robot packets",
+    "gripper": {
+      "model": "RH-P12-RN-A",
+      "protocol": "Modbus RTU over tool flange RS-485",
+      "port": 1,
+      "baud": 57600,
+      "bytesize": 8,
+      "parity": "none",
+      "stopbits": 1,
+      "slave_id": 1,
+      "open_pulses": 0,
+      "close_pulses": 740,
+      "legacy_test_goal_current_mA": 400,
+      "open_settle_ms": 500,
+      "response_timeout_ms": 1000,
+      "goal_register": 282,
+      "torque_register": 256,
+      "current_register": 275,
+      "feedback_register": 285,
+      "feedback_count": 7,
+      "status_services": [
+        "/dsr01/warehouse_gripper/status",
+        "/dsr01/warehouse_gripper/open",
+        "/dsr01/warehouse_gripper/close"
+      ]
+    }
+  },
+  "poses": {
+    "floor": {
+      "floor_z": 0.0,
+      "floor_samples": [
+        -1.05
+      ],
+      "safety_margin": 10.0,
+      "nfc_protrusion": 0.0
+    },
+    "virtual": {
+      "floor_z": 100.0,
+      "nfc_protrusion": 0.0
+    },
+    "motion": {
+      "approach_offset_z": 150.0,
+      "max_vel": 30.0,
+      "max_acc": 30.0
+    },
+    "poses": {
+      "home": {
+        "posx": [
+          373.0,
+          0.0,
+          285.0,
+          12.44,
+          180.0,
+          12.44
+        ],
+        "posj": [
+          0.0,
+          0.0,
+          90.0,
+          0.0,
+          90.0,
+          0.0
+        ],
+        "taught": true
+      },
+      "label_scan_approach": {
+        "posx": [
+          -323.0,
+          280.0,
+          285.0,
+          44.28,
+          180.0,
+          -135.72
+        ],
+        "posj": [
+          139.08,
+          8.4,
+          80.99,
+          0.0,
+          90.61,
+          -40.92
+        ],
+        "taught": true
+      },
+      "label_scan": {
+        "posx": [
+          -323.0,
+          280.0,
+          50.0,
+          133.03,
+          180.0,
+          -46.97
+        ],
+        "posj": [
+          139.08,
+          19.13,
+          105.95,
+          0.0,
+          54.91,
+          -40.92
+        ],
+        "taught": true
+      },
+      "via_point": {
+        "posx": [
+          0.0,
+          373.0,
+          285.0,
+          135.0,
+          180.0,
+          45.0
+        ],
+        "posj": [
+          90.0,
+          0.0,
+          90.0,
+          0.0,
+          90.0,
+          0.0
+        ],
+        "taught": true
+      }
+    },
+    "box_slots": {
+      "1": {
+        "posx": [
+          -373.0,
+          0.0,
+          85.0,
+          3.26,
+          180.0,
+          -176.74
+        ],
+        "posj": [
+          180.0,
+          8.56,
+          113.11,
+          0.0,
+          58.33,
+          0.0
+        ],
+        "taught": true
+      },
+      "2": {
+        "posx": null,
+        "posj": null,
+        "taught": false
+      },
+      "3": {
+        "posx": null,
+        "posj": null,
+        "taught": false
+      },
+      "4": {
+        "posx": null,
+        "posj": null,
+        "taught": false
+      }
+    }
+  },
+  "products": {
+    "products": {
+      "snack_box": {
+        "real": {
+          "x": 491.5,
+          "y": -5.0,
+          "rz": 0.0,
+          "grasp_height_from_floor": 120.0,
+          "taught": true
+        },
+        "virtual": {
+          "x": 491.5,
+          "y": -5.0,
+          "rz": 0.0,
+          "grasp_height_from_floor": 120.0
+        },
+        "grip_force": null
+      },
+      "snack_pepero": {
+        "real": {
+          "x": 491.5,
+          "y": -5.0,
+          "rz": 0.0,
+          "grasp_height_from_floor": 120.0,
+          "taught": true
+        },
+        "virtual": {
+          "x": 491.5,
+          "y": -5.0,
+          "rz": 0.0,
+          "grasp_height_from_floor": 120.0
+        },
+        "grip_force": null
+      },
+      "pet_bottle": {
+        "real": {
+          "x": 450.0,
+          "y": 50.0,
+          "rz": 0.0,
+          "grasp_height_from_floor": 150.0,
+          "taught": true
+        },
+        "virtual": {
+          "x": 450.0,
+          "y": 50.0,
+          "rz": 0.0,
+          "grasp_height_from_floor": 150.0
+        },
+        "grip_force": null
+      },
+      "beverage_pet": {
+        "real": {
+          "x": 450.0,
+          "y": 50.0,
+          "rz": 0.0,
+          "grasp_height_from_floor": 150.0,
+          "taught": true
+        },
+        "virtual": {
+          "x": 450.0,
+          "y": 50.0,
+          "rz": 0.0,
+          "grasp_height_from_floor": 150.0
+        },
+        "grip_force": null
+      },
+      "can": {
+        "real": {
+          "x": 450.0,
+          "y": -50.0,
+          "rz": 0.0,
+          "grasp_height_from_floor": 30.0,
+          "taught": true
+        },
+        "virtual": {
+          "x": 450.0,
+          "y": -50.0,
+          "rz": 0.0,
+          "grasp_height_from_floor": 30.0
+        },
+        "grip_force": null
+      },
+      "canned_meat": {
+        "real": {
+          "x": 450.0,
+          "y": -50.0,
+          "rz": 0.0,
+          "grasp_height_from_floor": 30.0,
+          "taught": true
+        },
+        "virtual": {
+          "x": 450.0,
+          "y": -50.0,
+          "rz": 0.0,
+          "grasp_height_from_floor": 30.0
+        },
+        "grip_force": null
+      },
+      "wet_tissue": {
+        "real": {
+          "x": 450.0,
+          "y": -150.0,
+          "rz": 0.0,
+          "grasp_height_from_floor": 30.0,
+          "taught": true
+        },
+        "virtual": {
+          "x": 450.0,
+          "y": -150.0,
+          "rz": 0.0,
+          "grasp_height_from_floor": 30.0
+        },
+        "grip_force": null
+      },
+      "wet_wipes": {
+        "real": {
+          "x": 450.0,
+          "y": -150.0,
+          "rz": 0.0,
+          "grasp_height_from_floor": 30.0,
+          "taught": true
+        },
+        "virtual": {
+          "x": 450.0,
+          "y": -150.0,
+          "rz": 0.0,
+          "grasp_height_from_floor": 30.0
+        },
+        "grip_force": null
+      },
+      "doll": {
+        "real": {
+          "x": null,
+          "y": null,
+          "rz": null,
+          "grasp_height_from_floor": null,
+          "taught": false
+        },
+        "virtual": {
+          "x": 550.0,
+          "y": -100.0,
+          "rz": 0.0,
+          "grasp_height_from_floor": 50.0
+        },
+        "grip_force": null
+      }
+    }
+  },
+  "transforms": {
+    "camera_to_base_matrix": null,
+    "camera_to_base_calibration_status": "No measured calibration in audited repositories",
+    "tool_to_base_rotation": "Rz(A) Ry(B) Rz(C); angles degrees; translation mm",
+    "tool_relative_translation": "delta_base = R_base_tool @ delta_tool",
+    "planar_web": "Barycentric projective mapping from four taught pixel/BASE correspondences; no saved correspondences found",
+    "rgbd_reference": "P_camera_m = depth_m * inverse(K) * [u,v,1]; P_base_m = T_base_camera * [P_camera_m,1]; m→mm ×1000; RPY radians is not Doosan ZYZ degrees"
+  },
+  "provenance": "See source-audit.json (original), source-audit.final.json (delivered), robotArm_Controller_demo/provenance.json",
+  "certainty": {
+    "physical_robot_connection_tested": false,
+    "physical_failure_root_cause_confirmed": false,
+    "source_confirmed_completion_bug": "Moving/Moving Status register 285 packed word; corrected code selected",
+    "physical_hypotheses": [
+      "plugin not spawned/active",
+      "serial ownership conflict",
+      "SDK/firmware/port mismatch",
+      "power/wiring"
+    ]
+  }
+}

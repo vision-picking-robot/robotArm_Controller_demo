@@ -1,0 +1,203 @@
+{
+  "result": {
+    "request_id": "7191e6d3da874627b837c5880b8ef487",
+    "state": "completed",
+    "mock_mode": true,
+    "completed_steps": [
+      "home",
+      "approach",
+      "pick",
+      "lift",
+      "via",
+      "place_approach",
+      "place",
+      "retreat",
+      "home"
+    ]
+  },
+  "events": [
+    {
+      "action": "gripper_status"
+    },
+    {
+      "action": "movel",
+      "pose": [
+        373.0,
+        0.0,
+        285.0,
+        12.44,
+        180.0,
+        12.44
+      ],
+      "vel": 10.0,
+      "acc": 10.0,
+      "ref": 0,
+      "radius": 0.0
+    },
+    {
+      "action": "movel",
+      "pose": [
+        500.1564945226917,
+        0.20876826722337746,
+        270.0,
+        0.0,
+        180.0,
+        0.0
+      ],
+      "vel": 10.0,
+      "acc": 10.0,
+      "ref": 0,
+      "radius": 0.0
+    },
+    {
+      "action": "gripper_open"
+    },
+    {
+      "action": "gripper_status"
+    },
+    {
+      "action": "gripper_status"
+    },
+    {
+      "action": "movel",
+      "pose": [
+        500.1564945226917,
+        0.20876826722337746,
+        120.0,
+        0.0,
+        180.0,
+        0.0
+      ],
+      "vel": 10.0,
+      "acc": 10.0,
+      "ref": 0,
+      "radius": 0.0
+    },
+    {
+      "action": "gripper_close"
+    },
+    {
+      "action": "gripper_status"
+    },
+    {
+      "action": "gripper_status"
+    },
+    {
+      "action": "movel",
+      "pose": [
+        500.1564945226917,
+        0.20876826722337746,
+        270.0,
+        0.0,
+        180.0,
+        0.0
+      ],
+      "vel": 10.0,
+      "acc": 10.0,
+      "ref": 0,
+      "radius": 0.0
+    },
+    {
+      "action": "gripper_status"
+    },
+    {
+      "action": "gripper_status"
+    },
+    {
+      "action": "movel",
+      "pose": [
+        0.0,
+        373.0,
+        270.0,
+        135.0,
+        180.0,
+        45.0
+      ],
+      "vel": 10.0,
+      "acc": 10.0,
+      "ref": 0,
+      "radius": 0.0
+    },
+    {
+      "action": "gripper_status"
+    },
+    {
+      "action": "gripper_status"
+    },
+    {
+      "action": "movel",
+      "pose": [
+        -373.0,
+        0.0,
+        270.0,
+        3.26,
+        180.0,
+        -176.74
+      ],
+      "vel": 10.0,
+      "acc": 10.0,
+      "ref": 0,
+      "radius": 0.0
+    },
+    {
+      "action": "gripper_status"
+    },
+    {
+      "action": "gripper_status"
+    },
+    {
+      "action": "movel",
+      "pose": [
+        -373.0,
+        0.0,
+        85.0,
+        3.26,
+        180.0,
+        -176.74
+      ],
+      "vel": 10.0,
+      "acc": 10.0,
+      "ref": 0,
+      "radius": 0.0
+    },
+    {
+      "action": "gripper_open"
+    },
+    {
+      "action": "gripper_status"
+    },
+    {
+      "action": "gripper_status"
+    },
+    {
+      "action": "movel",
+      "pose": [
+        -373.0,
+        0.0,
+        270.0,
+        3.26,
+        180.0,
+        -176.74
+      ],
+      "vel": 10.0,
+      "acc": 10.0,
+      "ref": 0,
+      "radius": 0.0
+    },
+    {
+      "action": "movel",
+      "pose": [
+        373.0,
+        0.0,
+        285.0,
+        12.44,
+        180.0,
+        12.44
+      ],
+      "vel": 10.0,
+      "acc": 10.0,
+      "ref": 0,
+      "radius": 0.0
+    }
+  ]
+}

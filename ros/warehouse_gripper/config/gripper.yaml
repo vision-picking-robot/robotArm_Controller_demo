@@ -1,0 +1,5 @@
+/**/warehouse_gripper:
+  ros__parameters:
+    type: warehouse_gripper/GripperController
+    flange_port: 1
+    enable_motion: false

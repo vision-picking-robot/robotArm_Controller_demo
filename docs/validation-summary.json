@@ -1,0 +1,30 @@
+{
+  "demo": {
+    "tests": 18,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0
+  },
+  "legacy": {
+    "tests": 136,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0
+  },
+  "web-targeted": {
+    "tests": 107,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0
+  },
+  "javascript": {
+    "tests": 50,
+    "failures": 0
+  },
+  "ui_html_css": {
+    "files": 10,
+    "unchanged": true
+  },
+  "hardware_tested": false,
+  "full_web_regression_passed": false
+}

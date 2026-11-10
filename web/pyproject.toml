@@ -1,0 +1,10 @@
+[project]
+name = "yolov8-camera-server"
+version = "0.1.0"
+description = "Local YOLOv8 camera serving for Apple Silicon"
+requires-python = ">=3.11,<3.13"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"

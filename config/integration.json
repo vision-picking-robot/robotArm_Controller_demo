@@ -1,0 +1,153 @@
+{
+  "mock_mode": true,
+  "namespace": "dsr01",
+  "robot_ip": "110.120.1.63",
+  "robot_port": 12345,
+  "calibration_verified": false,
+  "tcp_verified": false,
+  "waypoints_verified": false,
+  "gripper_verified": false,
+  "workspace_verified": false,
+  "calibration": {
+    "camera": {
+      "session_id": "mock-session",
+      "camera_generation": 1,
+      "camera_id": "mock-camera",
+      "width": 640,
+      "height": 480
+    },
+    "region": "legacy",
+    "revision": "mock-only-v1",
+    "corners": [
+      {
+        "pixel": [
+          0.0,
+          0.0
+        ],
+        "pose": [
+          400.0,
+          -100.0,
+          0.0,
+          0.0,
+          180.0,
+          0.0
+        ]
+      },
+      {
+        "pixel": [
+          639.0,
+          0.0
+        ],
+        "pose": [
+          600.0,
+          -100.0,
+          0.0,
+          0.0,
+          180.0,
+          0.0
+        ]
+      },
+      {
+        "pixel": [
+          639.0,
+          479.0
+        ],
+        "pose": [
+          600.0,
+          100.0,
+          0.0,
+          0.0,
+          180.0,
+          0.0
+        ]
+      },
+      {
+        "pixel": [
+          0.0,
+          479.0
+        ],
+        "pose": [
+          400.0,
+          100.0,
+          0.0,
+          0.0,
+          180.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "min_confidence": 0.6,
+  "workspace_mm": {
+    "min": [
+      -650.0,
+      -650.0,
+      10.0
+    ],
+    "max": [
+      650.0,
+      650.0,
+      600.0
+    ]
+  },
+  "class_map": {
+    "snack_box": "snack_box",
+    "snack_pepero": "snack_pepero",
+    "beverage_pet": "beverage_pet",
+    "pet_bottle": "pet_bottle",
+    "can": "can",
+    "canned_meat": "canned_meat",
+    "wet_tissue": "wet_tissue",
+    "wet_wipes": "wet_wipes"
+  },
+  "grasp_feedback": {
+    "snack_box": {
+      "calibrated": false,
+      "min_position_pulses": 100,
+      "max_position_pulses": 600,
+      "min_current": 100
+    },
+    "snack_pepero": {
+      "calibrated": false,
+      "min_position_pulses": 100,
+      "max_position_pulses": 600,
+      "min_current": 100
+    },
+    "beverage_pet": {
+      "calibrated": false,
+      "min_position_pulses": 100,
+      "max_position_pulses": 600,
+      "min_current": 100
+    },
+    "pet_bottle": {
+      "calibrated": false,
+      "min_position_pulses": 100,
+      "max_position_pulses": 600,
+      "min_current": 100
+    },
+    "can": {
+      "calibrated": false,
+      "min_position_pulses": 100,
+      "max_position_pulses": 600,
+      "min_current": 100
+    },
+    "canned_meat": {
+      "calibrated": false,
+      "min_position_pulses": 100,
+      "max_position_pulses": 600,
+      "min_current": 100
+    },
+    "wet_tissue": {
+      "calibrated": false,
+      "min_position_pulses": 100,
+      "max_position_pulses": 600,
+      "min_current": 100
+    },
+    "wet_wipes": {
+      "calibrated": false,
+      "min_position_pulses": 100,
+      "max_position_pulses": 600,
+      "min_current": 100
+    }
+  }
+}

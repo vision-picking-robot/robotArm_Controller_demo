@@ -1,0 +1,5 @@
+{
+  "origin": "https://github.com/ryankim8815/yolov8",
+  "base_commit": "c265ffb0424447dcef8ce67ef72c2172a3eac6ad",
+  "contents": "Working app and tests snapshot with integration changes; no state, credentials or model weights"
+}

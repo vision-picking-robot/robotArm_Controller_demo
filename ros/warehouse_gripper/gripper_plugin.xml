@@ -1,0 +1,7 @@
+<library path="warehouse_gripper">
+  <class name="warehouse_gripper/GripperController"
+         type="warehouse_gripper::GripperController"
+         base_class_type="controller_interface::ControllerInterface">
+    <description>RH-P12-RN-A Modbus RTU control over the Doosan tool flange.</description>
+  </class>
+</library>

@@ -1,0 +1,19 @@
+# mock 숫자는 소프트웨어 분기 검사용 합성값이며 실물 권장값이 아닙니다.
+# real은 실물 폭/전류 변환과 상품별 파지 시험을 마친 뒤에만 채웁니다.
+# current_limit_ma는 모터 전류 제한이며 N 단위의 파지력이 아닙니다.
+profiles:
+  snack_box:
+    real: {calibrated: false}
+    mock: {open_width_mm: 80, target_width_mm: 20, min_width_mm: 48, max_width_mm: 60, close_speed_mm_s: 8, current_limit_ma: 120, contact_current_ma: 30}
+  pet_bottle:
+    real: {calibrated: false}
+    mock: {open_width_mm: 90, target_width_mm: 15, min_width_mm: 50, max_width_mm: 70, close_speed_mm_s: 12, current_limit_ma: 180, contact_current_ma: 50}
+  can:
+    real: {calibrated: false}
+    mock: {open_width_mm: 85, target_width_mm: 20, min_width_mm: 55, max_width_mm: 75, close_speed_mm_s: 15, current_limit_ma: 250, contact_current_ma: 75}
+  wet_tissue:
+    real: {calibrated: false}
+    mock: {open_width_mm: 100, target_width_mm: 15, min_width_mm: 40, max_width_mm: 75, close_speed_mm_s: 6, current_limit_ma: 120, contact_current_ma: 35}
+  doll:
+    real: {calibrated: false}
+    mock: {open_width_mm: 100, target_width_mm: 5, min_width_mm: 25, max_width_mm: 70, close_speed_mm_s: 4, current_limit_ma: 90, contact_current_ma: 20}

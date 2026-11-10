@@ -1,0 +1,155 @@
+{
+  "transport": "real localhost HTTP through web bridge",
+  "context": {
+    "camera": {
+      "session_id": "mock-session",
+      "camera_generation": 1,
+      "camera_id": "mock-camera",
+      "width": 640,
+      "height": 480
+    },
+    "calibration_revision": "mock-only-v1",
+    "mock_mode": true
+  },
+  "plan": {
+    "mock_mode": true,
+    "frame": "robot_base",
+    "units": {
+      "position": "mm",
+      "orientation": "deg_ZYZ"
+    },
+    "product": "snack_box",
+    "pick_pose": [
+      500.1564945226917,
+      0.20876826722337746,
+      120.0,
+      0.0,
+      180.0,
+      0.0
+    ],
+    "route": [
+      [
+        "home",
+        [
+          373.0,
+          0.0,
+          285.0,
+          12.44,
+          180.0,
+          12.44
+        ]
+      ],
+      [
+        "approach",
+        [
+          500.1564945226917,
+          0.20876826722337746,
+          270.0,
+          0.0,
+          180.0,
+          0.0
+        ]
+      ],
+      [
+        "pick",
+        [
+          500.1564945226917,
+          0.20876826722337746,
+          120.0,
+          0.0,
+          180.0,
+          0.0
+        ]
+      ],
+      [
+        "lift",
+        [
+          500.1564945226917,
+          0.20876826722337746,
+          270.0,
+          0.0,
+          180.0,
+          0.0
+        ]
+      ],
+      [
+        "via",
+        [
+          0.0,
+          373.0,
+          270.0,
+          135.0,
+          180.0,
+          45.0
+        ]
+      ],
+      [
+        "place_approach",
+        [
+          -373.0,
+          0.0,
+          270.0,
+          3.26,
+          180.0,
+          -176.74
+        ]
+      ],
+      [
+        "place",
+        [
+          -373.0,
+          0.0,
+          85.0,
+          3.26,
+          180.0,
+          -176.74
+        ]
+      ],
+      [
+        "retreat",
+        [
+          -373.0,
+          0.0,
+          270.0,
+          3.26,
+          180.0,
+          -176.74
+        ]
+      ],
+      [
+        "home",
+        [
+          373.0,
+          0.0,
+          285.0,
+          12.44,
+          180.0,
+          12.44
+        ]
+      ]
+    ],
+    "grasp_feedback": {
+      "calibrated": false,
+      "min_position_pulses": 100,
+      "max_position_pulses": 600,
+      "min_current": 100
+    }
+  },
+  "result": {
+    "request_id": "baae9b324fbc4bb4b16a360cc7686434",
+    "state": "completed",
+    "mock_mode": true,
+    "completed_steps": [
+      "home",
+      "approach",
+      "pick",
+      "lift",
+      "via",
+      "place_approach",
+      "place",
+      "retreat",
+      "home"
+    ]
+  },
+  "replay_identical": true
+}

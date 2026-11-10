@@ -1,0 +1,164 @@
+{
+  "$defs": {
+    "CameraFrame": {
+      "additionalProperties": false,
+      "properties": {
+        "session_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Session Id",
+          "type": "string"
+        },
+        "camera_generation": {
+          "minimum": 1,
+          "title": "Camera Generation",
+          "type": "integer"
+        },
+        "camera_id": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Camera Id",
+          "type": "string"
+        },
+        "width": {
+          "exclusiveMinimum": 0,
+          "title": "Width",
+          "type": "integer"
+        },
+        "height": {
+          "exclusiveMinimum": 0,
+          "title": "Height",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "session_id",
+        "camera_generation",
+        "camera_id",
+        "width",
+        "height"
+      ],
+      "title": "CameraFrame",
+      "type": "object"
+    },
+    "Detection": {
+      "additionalProperties": false,
+      "properties": {
+        "class_id": {
+          "minimum": 0,
+          "title": "Class Id",
+          "type": "integer"
+        },
+        "label": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "xyxy": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "title": "Xyxy",
+          "type": "array"
+        },
+        "center_px": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "title": "Center Px",
+          "type": "array"
+        }
+      },
+      "required": [
+        "class_id",
+        "label",
+        "confidence",
+        "xyxy",
+        "center_px"
+      ],
+      "title": "Detection",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "simulation_only": {
+      "title": "Simulation Only",
+      "type": "boolean"
+    },
+    "request_id": {
+      "pattern": "^[A-Za-z0-9_-]{8,64}$",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "camera": {
+      "$ref": "#/$defs/CameraFrame"
+    },
+    "frame_id": {
+      "minimum": 1,
+      "title": "Frame Id",
+      "type": "integer"
+    },
+    "captured_at": {
+      "title": "Captured At",
+      "type": "string"
+    },
+    "model_version": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Model Version",
+      "type": "string"
+    },
+    "object_index": {
+      "minimum": 0,
+      "title": "Object Index",
+      "type": "integer"
+    },
+    "detection": {
+      "$ref": "#/$defs/Detection"
+    },
+    "calibration_revision": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Calibration Revision",
+      "type": "string"
+    },
+    "box_slot": {
+      "default": 1,
+      "maximum": 4,
+      "minimum": 1,
+      "title": "Box Slot",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "simulation_only",
+    "request_id",
+    "camera",
+    "frame_id",
+    "captured_at",
+    "model_version",
+    "object_index",
+    "detection",
+    "calibration_revision"
+  ],
+  "title": "PickRequest",
+  "type": "object"
+}

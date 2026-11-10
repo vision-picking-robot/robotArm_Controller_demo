@@ -1,0 +1,63 @@
+# 자세·바닥 높이 설정 (단위: mm, deg / 기준 좌표계: base)
+#
+# - posx: [x, y, z, rx, ry, rz]  (두산 ZYZ 오일러)
+# - posj: [j1, j2, j3, j4, j5, j6]
+# - taught: 직접 교시로 기록했으면 true. 실물 모드(real)에서는 taught: true 인 자세만 사용한다.
+# - 교시 도우미(마일스톤 4)가 이 파일의 값을 채운다. 손으로 숫자를 지어내 넣지 말 것.
+
+floor:
+  # 바닥 높이: 그리퍼를 닫고 TCP를 테이블에 살짝 닿게 해 최소 4곳 측정 → 가장 높은 값
+  floor_z: 0.0             # 측정 완료 (실측 -1.05mm, 여유치 0.0mm 반영)
+  floor_samples: [-1.05]   # 측정한 z 값들
+  # 소프트웨어 하한선 = floor_z + safety_margin + nfc_protrusion
+  safety_margin: 10.0
+  # NFC 리더기 하단이 TCP(손끝)보다 아래로 나온 양. 위에 있으면 0
+  nfc_protrusion: 0.0      # 리더기가 TCP보다 아래로 나오지 않았으면 0.0
+
+# 가상 모드(mode:=virtual) 테스트 전용 값. 실물에는 절대 쓰이지 않는다.
+virtual:
+  floor_z: 100.0
+  nfc_protrusion: 0.0
+
+motion:
+  approach_offset_z: 150.0   # 집기 자세 위 접근 및 인출 높이 (+15cm = 150mm)
+  # 실물 첫 실행은 30 이하 (README 안전 규칙)
+  max_vel: 30.0
+  max_acc: 30.0
+
+poses:
+  home:                     # YOLO 촬영 시 카메라 시야 밖이어야 함
+    posx: [373.0, 0.0, 285.0, 12.44, 180.0, 12.44]
+    posj: [0.0, 0.0, 90.0, 0.0, 90.0, 0.0]
+    taught: true
+  label_scan_approach:      # 리더기 접근 위치 (Z 285mm)
+    posx: [-323.0, 280.0, 285.0, 44.28, 180.0, -135.72]
+    posj: [139.08, 8.40, 80.99, 0.0, 90.61, -40.92]
+    taught: true
+  label_scan:               # 리더기가 라벨을 읽는 위치 (Z 50mm)
+    posx: [-323.0, 280.0, 50.0, 133.03, 180.0, -46.97]
+    posj: [139.08, 19.13, 105.95, 0.0, 54.91, -40.92]
+    taught: true
+  via_point:                # 상품 구역 ↔ 박스 사이 경유점 (리더기 방향 90도 회전, Z 285mm)
+    posx: [0.0, 373.0, 285.0, 135.0, 180.0, 45.0]
+    posj: [90.0, 0.0, 90.0, 0.0, 90.0, 0.0]
+    taught: true
+
+# 박스 안 내려놓기 위치 (슬롯 번호 = 키)
+box_slots:
+  1:
+    posx: [-373.0, 0.0, 85.0, 3.26, 180.0, -176.74]
+    posj: [180.0, 8.56, 113.11, 0.0, 58.33, 0.0]
+    taught: true
+  2:
+    posx: null
+    posj: null
+    taught: false
+  3:
+    posx: null
+    posj: null
+    taught: false
+  4:
+    posx: null
+    posj: null
+    taught: false
