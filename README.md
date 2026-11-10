@@ -211,6 +211,16 @@ python scripts/project_cycle.py --cycles 1                                # MOCK
 python scripts/project_cycle.py --mode real --confirm-real --cycles 1     # 실물 1회
 ```
 
+웹 대시보드와 연동하려면 `python scripts/start_lab.py`를 띄운 뒤 `--api http://127.0.0.1:8000`을 붙인다.
+저장소의 `robot_rfid.orchestrator.Orchestrator`가 스캔 이벤트 등록 → PICKING → COMPLETED를 웹 작업 큐에 반영한다.
+
+**실물 검증 (2026-11-10 22:01–22:04, 3분 8초):** 복구 상승 → home → 라벨 스캔(z 50) → 태그 0B71E55D →
+그리퍼 열기 → 접근·하강(z 120) → 파지(빈 닫힘 738) → 들기 → 경유점 → 박스 슬롯 1(z 85) 놓기 → 열기 → 복귀,
+웹 작업 `COMPLETED`. 상품을 놓지 않은 빈 파지 시험이며 RFID 리더 미연결로 프리셋 태그를 사용했다.
+
+드라이버가 `AUTHORITY : MONITORING_ACCESS_CONTROL_DENY`로 초기화에 실패하면(RViz link_1~6 No transform)
+드라이버가 두 개 떠 있지 않은지 확인하고, 펜던트 알람 해제·제어권 승인 또는 컨트롤러 전원 재시작 후 다시 띄운다.
+
 ### 7. 실측값 입력 후 실물 통합 API 실행 — 터미널 C
 
 ```bash
