@@ -4,158 +4,248 @@
 기본값은 MOCK이며 로봇에 연결하지 않는다. 실물 보정·TCP·상품별 파지값 검증은 남아 있다.
 이 저장소만 clone하면 제어기, 웹/음성 소스, 설정, 분석 문서가 함께 내려온다.
 
-## 노트북에서 바로 시작
+## 최종 실행 절차: main 갱신부터 실물 연결까지
 
-### 이미 clone한 실습실 노트북: main 갱신 후 이어서 실행
+**전제:** Ubuntu 24.04 / ROS 2 Jazzy / Python 3.12를 사용하며, 장비와 호환되는 두산 드라이버가
+`~/ros2_ws`에 빌드되어 있어야 한다. 패키지 조회·빌드·상태 확인이 실패하면 해당 단계에서 해결한 뒤 진행한다.
+저장소 경로가 다르면 `~/vision_lab/robotArm_Controller_demo`를 실제 경로로 바꾼다.
 
-실행 중인 이전 서버는 해당 터미널에서 `Ctrl+C`로 종료한 후 아래 명령을 실행한다.
-저장소 경로가 다르면 첫 번째 줄만 실제 clone 경로로 바꾼다.
+| 용도 | 주소·포트 |
+|---|---|
+| 두산 제어기 | 펜던트에서 확인한 실제 IP `110.120.1.56`~`110.120.1.63` 중 하나, DRFL **12345** |
+| 노트북 제어 API | `http://127.0.0.1:8011/docs` |
+| 웹 대시보드 | `http://127.0.0.1:8000` |
+| ROS 네임스페이스 | `dsr01` |
+| 그리퍼 통신 | 두산 Tool Flange RS-485, port 1, ID 1, 57600/8N1 |
+
+8011은 두산 DRFL 포트가 아니다. IP 후보를 자동 스캔하거나 PC COM3 직결로 가정하지 않는다.
+실제 로봇·그리퍼 동작은 아래에 표시한 실물 단계에서만 수행한다.
+
+### 1. main 갱신 및 Python 환경 준비 — 터미널 A
+
+기존 서버는 해당 터미널에서 `Ctrl+C`로 종료한다. 처음 사용하는 노트북이라면 다음 명령으로 clone한다.
+
+```bash
+sudo apt update
+sudo apt install -y git python3.12-venv
+mkdir -p ~/vision_lab
+cd ~/vision_lab
+git clone https://github.com/vision-picking-robot/robotArm_Controller_demo.git
+```
+
+이미 clone한 노트북은 위 clone 명령을 생략하고 다음부터 실행한다.
 
 ```bash
 cd ~/vision_lab/robotArm_Controller_demo
 git switch main
 git pull --ff-only origin main
+git log -1 --oneline
 
 source /opt/ros/jazzy/setup.bash
+echo "$ROS_DISTRO"
 [ -d .venv ] || python3.12 -m venv --system-site-packages .venv
 source .venv/bin/activate
+python --version
 python -m pip install -r requirements.txt
+```
 
-# 이전 터미널의 실물 설정을 해제하고 MOCK부터 확인
+`jazzy`, `Python 3.12.x`를 확인한다. 현장 전용 `config/hardware.local.json`은 Git 제외 대상이므로
+노트북에서 별도로 보관·입력한다. 모델 가중치와 GPU 추론 환경은 저장소에 포함하지 않는다.
+
+### 2. 로봇 없이 MOCK 확인 — 터미널 A
+
+```bash
 unset PICKING_CONFIG
 export MOCK_MODE=true
+
 python mock_demo.py
-python scripts/test_gripper.py --mode mock --action status
-
-# 제어 API 8011 + 웹 8000을 함께 기동 (MOCK 전용)
-python scripts/start_lab.py
-```
-
-웹은 `http://127.0.0.1:8000`, API 문서는 `http://127.0.0.1:8011/docs`다.
-런처는 MOCK 모드와 공유 RFID DB 경로를 사용한다. 종료는 런처 터미널의 `Ctrl+C`다.
-기존 `config/hardware.local.json` 등 현장 전용 설정은 Git 제외 대상이며 `git pull`로 배포하지 않는다.
-실물은 아래 별도 절차에서 ROS 작업공간과 실측 설정을 적용한다.
-
-### 처음 사용하는 노트북: clone 및 환경 설치
-
-Ubuntu 24.04 터미널:
-
-```bash
-git clone https://github.com/vision-picking-robot/robotArm_Controller_demo.git
-cd robotArm_Controller_demo
-git switch main
-python3.12 -m venv --system-site-packages .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-python mock_demo.py
-python scripts/start_controller.py
-```
-
-`venv`가 없다면 `sudo apt install python3.12-venv`로 설치한다.
-Windows는 Python 3.12 설치 후 `py -3.12 -m venv .venv`, `.venv\Scripts\Activate.ps1`을 사용하고,
-이후 pip·mock_demo·start_controller 명령은 같다. 모델 가중치나 GPU 추론 환경은 포함하지 않는다.
-
-기본 서버: [http://127.0.0.1:8011/docs](http://127.0.0.1:8011/docs).
-`GET /healthz`의 `mock_mode:true`를 먼저 확인한다. 한 로봇에 서버 프로세스 하나만 실행한다.
-검증된 진입점은 `vision_picking.server:create_app`이며 start_controller.py도 이 진입점을 사용한다.
-
-## IP·포트: 용도를 구분
-
-| 항목 | 기본값/후보 | 적용 위치 |
-|---|---|---|
-| 실습실 두산 제어기 IP | `110.120.1.56` ~ `110.120.1.63` 중 실제 장비 IP | 두산 드라이버 bringup의 `host`; `config/hardware.example.json:robot_ip`는 인수인계 메타데이터 |
-| 노트북 통합 HTTP API | **8011** | `python scripts/start_controller.py` |
-| 두산 DRFL 제어기 TCP | **12345** | 두산 드라이버 bringup의 `port:=12345` |
-| ROS 네임스페이스 | `dsr01` | `config/*.json:namespace`, 두산 bringup namespace |
-| 기존 rosbridge | `9090` | 기존 웹 ROS 관측 설정 |
-| 웹 대시보드 | `8000` | 아래 웹 실행 명령 |
-| 그리퍼 | Tool Flange RS-485, port 1, ID 1, 57600/8N1 | `ros/warehouse_gripper/config/gripper.yaml` 및 이식 프로토콜 |
-
-**요청한 8011은 HTTP API 포트다. 이를 두산 DRFL의 12345 대신 사용하지 않는다.**
-IP 범위는 후보이며 자동 스캔하거나 순서대로 제어권을 획득하지 않는다.
-`robot_ip` 설정만 바꾸면 이미 실행 중인 ROS 드라이버의 연결 대상이 바뀌는 것도 아니다.
-기존 Humble/GL010117 웹 연결 경로와 Jazzy 그리퍼 플러그인의 SDK/ABI를 섞지 않는다.
-
-## 그리퍼 단독 테스트
-
-로봇·ROS 없이 MOCK 상태/열기/닫기:
-
-```bash
 python scripts/test_gripper.py --mode mock --action status
 python scripts/test_gripper.py --mode mock --action open
 python scripts/test_gripper.py --mode mock --action close
+python -m pytest tests robot_rfid -q
 ```
 
-실물은 **Ubuntu/Jazzy에서 기존 두산 드라이버의 DRFL 연결을 공유**한다. PC COM3 직결로 가정하지 않는다.
-두산 드라이버와 아래 패키지를 같은 Jazzy 작업공간에 빌드한다. 원본 warehouse_gripper와 중복 등록하지 않는다.
-SDK/드라이버 의존성이 준비된 작업공간에서:
+MOCK 피킹의 `state: completed`, 그리퍼의 `mock_mode: true`, 테스트의 `45 passed`를 확인한다.
+이 단계는 실제 장비를 움직이지 않는다.
+
+웹까지 확인하려면 다음 런처를 실행한다.
+
+```bash
+python scripts/start_lab.py
+```
+
+대시보드 `http://127.0.0.1:8000`, API `http://127.0.0.1:8011/docs`를 연다.
+런처는 MOCK와 공유 RFID DB를 사용한다. 확인 후 **터미널 A에서 `Ctrl+C`로 종료**하고 다음 단계로 간다.
+음성은 Chrome/Edge의 localhost/HTTPS에서 기존 **음성 명령→대화 시작**과 브라우저 권한 허용으로 확인한다.
+
+### 3. 두산 드라이버 확인 및 그리퍼 빌드 — 터미널 A
 
 ```bash
 source /opt/ros/jazzy/setup.bash
+source ~/ros2_ws/install/setup.bash
+
+ros2 pkg prefix dsr_bringup2
+ros2 pkg prefix dsr_common2
+ros2 pkg prefix dsr_hardware2
+```
+
+패키지 경로가 나오지 않으면 먼저 두산 Jazzy 드라이버를 준비한다. 기존 Humble/GL010117 바이너리를
+새 Jazzy 플러그인과 검증 없이 혼합하지 않는다. 정상 조회 후 이번 저장소의 플러그인을 빌드한다.
+
+```bash
 cd ~/ros2_ws
-# src 아래 이 저장소를 clone했거나 ros/warehouse_gripper를 연결한 상태
+colcon build   --base-paths ~/vision_lab/robotArm_Controller_demo/ros   --packages-select warehouse_gripper
 source install/setup.bash
-colcon build --packages-select warehouse_gripper
-source install/setup.bash
-# 기존에 장비 연결이 확인된 두산 bringup을 먼저 실행한 상태
-ros2 launch warehouse_gripper gripper.launch.py
-ros2 control list_controllers -c /dsr01/controller_manager
-ros2 service call /dsr01/warehouse_gripper/status std_srvs/srv/Trigger '{}'
+ros2 pkg prefix warehouse_gripper
 ```
 
-플러그인은 기본 `enable_motion:false`다. DART/다른 시리얼 클라이언트를 종료하고,
-실물 상태와 작업 공간을 확인한 뒤 단독 명령을 한 개씩 실행한다. 팔을 움직이는 명령은 아래에 없다.
+같은 `warehouse_gripper` 소스를 중복 등록하지 않는다. 위 `--base-paths`는 이번 저장소의 복사본을 지정한다.
+
+### 4. 실물 두산 제어기에 연결 — 터미널 A
+
+DART 작업과 다른 로봇 제어 프로그램을 종료한다. 아래 IP는 실제 장비 주소로 변경한다.
 
 ```bash
-ros2 param set /dsr01/warehouse_gripper enable_motion true
-# 저장소 루트로 돌아와 .venv를 활성화하고 ROS workspace도 source한 터미널에서
-python scripts/test_gripper.py --mode real --namespace dsr01 --action status
-python scripts/test_gripper.py --mode real --namespace dsr01 --action open
-python scripts/test_gripper.py --mode real --namespace dsr01 --action close
-python scripts/test_gripper.py --mode real --namespace dsr01 --action status
-ros2 param set /dsr01/warehouse_gripper enable_motion false
+source /opt/ros/jazzy/setup.bash
+source ~/ros2_ws/install/setup.bash
+
+# 펜던트의 실제 주소가 .63이면 이 값을 변경
+export ROBOT_IP=110.120.1.56
+ping -c 3 "$ROBOT_IP"
+
+ros2 launch dsr_bringup2 dsr_bringup2_rviz.launch.py   name:=dsr01   mode:=real   host:="$ROBOT_IP"   port:=12345   model:=e0509
 ```
 
-열기/닫기는 실제 손가락을 움직인다. real 쓰기는 REAL/AUTO/STANDBY 확인과 플러그인 enable_motion을 요구한다.
-close의 `command_acknowledged:true`는 쓰기 응답 확인이며 완전 닫힘·물체 파지 성공이 아니다.
-`grasp_verified:false`를 유지한다. 상태의 실제 위치·전류·moving을 현물과 대조한다.
-오류 시 MOCK로 자동 전환하지 않는다. 실물 통신/동작을 이번 Windows 작업에서 시험하지 않았다.
+**터미널 A는 실행 상태로 유지한다.** `hardware.local.json`의 robot_ip 메타데이터를 바꾸는 것만으로
+이미 실행 중인 ROS 드라이버의 연결 대상이 바뀌지는 않는다.
 
-## 실측값을 넣는 정확한 위치
+### 5. 로봇 상태 확인 및 그리퍼 로드 — 새 터미널 B
 
-| 실측/교시 항목 | 파일·필드 |
+```bash
+source /opt/ros/jazzy/setup.bash
+source ~/ros2_ws/install/setup.bash
+
+ros2 service call   /dsr01/system/get_robot_system   dsr_msgs2/srv/GetRobotSystem '{}'
+ros2 service call   /dsr01/system/get_robot_mode   dsr_msgs2/srv/GetRobotMode '{}'
+ros2 service call   /dsr01/system/get_robot_state   dsr_msgs2/srv/GetRobotState '{}'
+```
+
+각 응답의 `success: true`와 다음 값을 확인한다.
+
+| 필드 | 필요한 값 |
 |---|---|
-| 카메라 4점 pixel↔BASE(mm, ZYZ deg), 장치/세션/해상도 | `config/hardware.local.json:calibration.camera`, `calibration.corners`, `calibration.revision` |
-| 클래스 라벨→상품 | 같은 파일의 `class_map` |
-| 상품별 파지 위치 범위·최소 전류 | 같은 파일의 `grasp_feedback.<상품>.min_position_pulses/max_position_pulses/min_current/calibrated` |
-| 작업 공간·namespace | 같은 파일의 `workspace_mm`, `namespace` |
-| 바닥·접근 높이·속도 한계·홈/경유/슬롯 | `config/poses.yaml:floor/motion/poses/box_slots` |
-| 상품 바닥 기준 집기 높이·교시 여부 | `config/products.yaml:products.<상품>.real` |
-| 실제 공구 TCP 이름·XYZABC 오프셋·Tool 설정 | **두산 펜던트/드라이버의 TCP·Tool 설정**. 현재 코드가 이 값을 자동 적용하지 않음 |
-| TCP 등 현장 검증 완료 표시 | `hardware.local.json:tcp_verified`, `calibration_verified`, `waypoints_verified`, `gripper_verified`, `workspace_verified` |
-
-TCP 오프셋과 그리퍼의 파지 피드백은 다른 값이다. URDF 장착 회전을 실제 TCP로 대신하지 않는다.
-기본 integration.json의 보정/파지 수치는 MOCK 예시이며 실물용이 아니다. slots 2–4는 미교시다.
+| robot_system | `0` — REAL |
+| robot_mode | `1` — AUTO |
+| robot_state | `1` — STANDBY |
 
 ```bash
-cp config/hardware.example.json config/hardware.local.json
-# hardware.local.json에 실측값을 입력한다. local 파일은 Git에서 제외된다.
-export PICKING_CONFIG="$PWD/config/hardware.local.json"
-export MOCK_MODE=false
-python scripts/start_controller.py
+ros2 launch warehouse_gripper gripper.launch.py
 ```
 
-example의 보정은 비어 있고 검증 플래그는 false여서 그대로 실물 피킹을 시작할 수 없다.
-위 명령은 실측·검증을 완료한 **후** 실행한다. `MOCK_MODE=false`만으로 구동 차단이 풀리지 않는다.
-합성 프레임 `simulation_only:true`는 실물 모드에서 거부한다. 실물 경로는 현재 수평 작업면만 지원한다.
+**터미널 B도 실행 상태로 유지한다.** 플러그인은 기본 `enable_motion:false`다.
 
-웹에서 저장한 보정을 읽기 전용으로 가져오려면:
+### 6. 그리퍼 실물 단독 시험 — 새 터미널 C
+
+먼저 상태만 조회한다.
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source ~/ros2_ws/install/setup.bash
+cd ~/vision_lab/robotArm_Controller_demo
+source .venv/bin/activate
+
+ros2 control list_controllers   -c /dsr01/controller_manager
+python scripts/test_gripper.py   --mode real --namespace dsr01 --action status
+```
+
+`warehouse_gripper`가 `active`이고 실제 위치·전류·moving이 읽히는지 확인한다.
+
+**아래부터 실제 손가락이 움직인다.** 주변을 비우고 상태가 정상일 때 한 줄씩 실행한다.
+팔 이동 명령은 아래에 없다.
+
+```bash
+ros2 param set   /dsr01/warehouse_gripper enable_motion true
+python scripts/test_gripper.py   --mode real --namespace dsr01 --action open
+python scripts/test_gripper.py   --mode real --namespace dsr01 --action status
+python scripts/test_gripper.py   --mode real --namespace dsr01 --action close
+python scripts/test_gripper.py   --mode real --namespace dsr01 --action status
+
+# 단독 시험 종료: 이후 신규 구동 명령 차단
+ros2 param set   /dsr01/warehouse_gripper enable_motion false
+```
+
+`command_acknowledged:true`는 명령 응답 확인이며 완전 닫힘·물체 파지 성공이 아니다.
+`grasp_verified:false`와 실제 위치·전류를 구분해 확인한다. 오류·타임아웃이면 반복 명령 대신
+현물과 상태부터 확인한다. enable_motion=false는 토크 해제나 긴급 정지를 뜻하지 않는다.
+
+### 7. 실측값 입력 후 실물 통합 API 실행 — 터미널 C
+
+```bash
+cd ~/vision_lab/robotArm_Controller_demo
+# 최초 한 번만 복사: 기존 현장 파일을 덮어쓰지 않음
+cp -n config/hardware.example.json config/hardware.local.json
+nano config/hardware.local.json
+```
+
+| 실측·교시 항목 | 적용 위치 |
+|---|---|
+| 카메라 장치·세션·해상도, 4점 pixel↔BASE, 보정 버전 | `hardware.local.json:calibration.camera/corners/revision` |
+| 클래스 라벨→상품 | 같은 파일의 `class_map` |
+| 상품별 파지 위치 범위·최소 전류 | `grasp_feedback.<상품>.min_position_pulses/max_position_pulses/min_current/calibrated` |
+| 작업 공간·ROS namespace | `workspace_mm`, `namespace` |
+| 바닥·홈·접근·경유·박스 좌표 | `config/poses.yaml` |
+| 상품별 바닥 기준 집기 높이 | `config/products.yaml` |
+| 실제 공구 TCP 이름·오프셋·Tool | **두산 펜던트/드라이버 설정** |
+
+TCP와 상품 파지 피드백은 별개다. 기본 MOCK 보정값을 실물에 사용하지 않는다.
+수평 작업면만 지원하며, 슬롯 2–4는 미교시다. 현재 바닥 표본은 1개이므로 현장에서 4점 이상 재측정한다.
+실측·검증을 끝낸 항목만 다음 표시를 true로 설정한다.
+
+```text
+calibration_verified
+tcp_verified
+waypoints_verified
+gripper_verified
+workspace_verified
+grasp_feedback.<상품>.calibrated
+```
+
+기존 웹의 보정값을 읽기 전용으로 가져오려면 아래 명령을 사용할 수 있다.
+결과 `config/imported.mock.json`은 여전히 MOCK이며 카메라 세션 변경 시 재동기화한다.
 
 ```bash
 python import_web_calibration.py --web http://127.0.0.1:8000 --region legacy
 ```
 
-결과는 `config/imported.mock.json`이며 여전히 MOCK다. 카메라 세션이 바뀌면 재동기화한다.
+모든 현장 확인을 마친 후 별도 실물 API를 실행한다. MOCK 런처는 이미 종료되어 있어야 한다.
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source ~/ros2_ws/install/setup.bash
+cd ~/vision_lab/robotArm_Controller_demo
+source .venv/bin/activate
+
+export PICKING_CONFIG="$PWD/config/hardware.local.json"
+export MOCK_MODE=false
+python scripts/start_controller.py
+```
+
+다른 터미널에서 확인한다.
+
+```bash
+curl http://127.0.0.1:8011/healthz
+```
+
+`mock_mode:false`는 서버 모드 확인이다. 실제 로봇 연결 상태는 4–6단계 조회로 확인한다.
+서버 기동만으로 팔이나 피킹이 시작되지 않는다. 자동 피킹에는 유효한 탐지 프레임·보정·파지 설정과
+플러그인 구동 허용이 필요하다. 6단계 종료 때 차단한 enable_motion은 실제 작업 직전 준비를 확인한 뒤
+다시 true로 설정해야 한다. 실물 동작을 위해 MOCK 전용 start_lab.py를 사용하지 않는다.
+
+작업 종료 시 동작 완료를 확인하고 신규 그리퍼 명령을 차단한 뒤 각 서버 터미널을 `Ctrl+C`로 종료한다.
+
+```bash
+ros2 param set /dsr01/warehouse_gripper enable_motion false
+```
 
 ## 보존된 웹 화면·한국어 음성
 
@@ -206,7 +296,8 @@ Web Speech API의 `ko-KR` 전사를 기존 packing 처리기로 전달한다. Ch
 - [현장 인수인계와 검증 한계](docs/04-runbook-and-validation.md)
 - [추출 자산 JSON](docs/legacy-assets.json), [이식 출처](provenance.json), [Payload Schema](config/payload.schema.json)
 
-문서 4종은 앞선 분석 기록이므로 과거 작업 폴더/8010 예시가 있다. **이 clone의 실행 포트·경로는 이 README의 8011 기준을 따른다.**
+이전 분석 자료에는 과거 작업 폴더/8010 예시가 남아 있다. **현재 실행은 이 README와
+[Ubuntu 현장 인수인계](docs/04-runbook-and-validation.md)의 경로·8011 기준을 따른다.**
 원본 소스 출처와 snapshot 범위는 [웹 출처](docs/web-source-provenance.json)에 기록했다.
 
 ```bash

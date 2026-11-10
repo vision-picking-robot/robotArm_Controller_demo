@@ -1,6 +1,6 @@
 # 19:00 실습실 빠른 시작 (Codex + Antigravity + RFID + Camera 통합본)
 
-최신 설치·실물 검사·보정 위치는 [루트 README](README.md)를 따른다.
+main 갱신 → MOCK → 그리퍼 단독 시험 → 실물 연결의 최종 순서는 [루트 README](README.md)와 [Ubuntu 현장 인수인계](docs/04-runbook-and-validation.md)를 따른다.
 Ubuntu 24.04 / ROS 2 Jazzy / Python 3.12 및 Windows 10/11 호환 기준이다.
 
 ## 1. 노트북 유선 LAN 및 하드웨어 연결 확인
@@ -16,7 +16,7 @@ Ubuntu 24.04 / ROS 2 Jazzy / Python 3.12 및 Windows 10/11 호환 기준이다.
 2. **그리퍼 단독 진단**: `test_gripper.bat` 더블클릭 (또는 `python scripts/test_gripper.py --mode mock --action status`)
    - 실물 열기/닫기는 README의 ROS 플러그인 준비와 `--mode real --action open/close` 절차를 따른다.
 3. **통합 런처 기동**: `start_lab_test.bat` 더블클릭 (또는 `python scripts/start_lab.py`)
-   - 제어기 IP Ping 점검 후 MOCK 제어기(`8011` 포트)와 통합 웹 대시보드(`8000` 포트)를 함께 시작하고 브라우저(`http://127.0.0.1:8000`)를 자동으로 연다.
+   - MOCK 제어기(`8011` 포트)와 통합 웹 대시보드(`8000` 포트)를 함께 시작한다. 브라우저에서 `http://127.0.0.1:8000`을 직접 연다. 실물 구동을 자동 선택하지 않는다.
    - `Ctrl+C`로 이 런처가 만든 프로세스만 안전하게 종료한다.
 
 ## 3. 대시보드 제어: 음성 인식 + 수동 버튼 제어 + RFID 태그 인식 + 카메라
