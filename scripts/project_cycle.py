@@ -119,6 +119,12 @@ class MockRaw:
     def scan(self):
         return '0B71E55D'
 
+    def raise_posj(self, posj, dz):
+        raised = [posj[0], posj[1] - 0.001 * dz, *posj[2:]]
+        base = self.fkin(posj, 0)
+        self.table[tuple(raised)] = [base[0], base[1], base[2] + dz, *base[3:]]
+        return raised
+
     def stop(self):
         pass
 
@@ -156,6 +162,22 @@ class RealRaw:
 
     def grip(self, target):
         return self.hand.run(target)
+
+    def raise_posj(self, posj, dz):
+        """Joint pose whose flange is dz higher with the same orientation and solution space."""
+        from dsr_msgs2.srv import GetSolutionSpace, Ikin
+        from vision_picking.legacy.ros_calls import call_service
+        node, ex = self.ros.node, self.ros.executor
+        if not hasattr(self, '_ik'):
+            self._ik = node.create_client(Ikin, '/dsr01/motion/ikin')
+            self._sol = node.create_client(GetSolutionSpace, '/dsr01/aux_control/get_solution_space')
+        flange = self.fkin(posj, 0)
+        sol = call_service(ex, self._sol, GetSolutionSpace.Request(pos=[float(v) for v in posj]), 3.0)
+        target = [flange[0], flange[1], flange[2] + dz, *flange[3:6]]
+        res = call_service(ex, self._ik, Ikin.Request(pos=target, sol_space=sol.sol_space, ref=0), 3.0)
+        if not (sol.success and res.success):
+            raise RuntimeError(f'ikin failed for raised pose of {posj}')
+        return list(res.conv_posj)
 
     def scan(self):
         try:
@@ -196,6 +218,23 @@ class Cycle:
         self.mover = SafeMover(self.z_min, FlangeOffset(raw, self.offset), poses['motion']['max_vel'],
                                poses['motion']['max_acc'], logger=log)
         log('tcp_offset', flange_minus_taught_z=round(dz, 2), applied_offset=self.offset, z_min=self.z_min)
+        # Carry height: transfer poses raised by --lift-extra so the held object clears the box wall.
+        P = poses['poses']
+        box_hi = [P['home']['posj'][0] + 180.0, *P['home']['posj'][1:]]
+        self.carry = {}
+        for name, posj in (('home', P['home']['posj']), ('via_point', P['via_point']['posj']), ('box_high', box_hi)):
+            raised = raw.raise_posj(posj, args.lift_extra) if args.lift_extra else list(posj)
+            check = raw.fkin(raised, DR_BASE)
+            base = raw.fkin(posj, DR_BASE)
+            if check is None or abs(check[2] - base[2] - args.lift_extra) > POS_TOL or \
+                    abs(check[0] - base[0]) > POS_TOL or abs(check[1] - base[1]) > POS_TOL:
+                raise RuntimeError(f'Raised {name} pose failed verification')
+            if max(abs(a - b) for a, b in zip(raised, posj)) > 45.0:
+                raise RuntimeError(f'Raised {name} pose changes a joint by more than 45 deg; refusing')
+            self.carry[name] = raised
+        log('carry_poses', lift_extra=args.lift_extra, place_extra=args.place_extra,
+            carry_z=round(P['home']['posx'][2] + args.lift_extra, 1),
+            posj={k: [round(v, 2) for v in val] for k, val in self.carry.items()})
 
     def j(self, name, posj):
         t0 = time.monotonic()
@@ -259,10 +298,11 @@ class Cycle:
     def approach(self, target):
         up = self.poses['motion']['approach_offset_z']
         grasp = target['pose']
-        self._above = [*grasp[:2], grasp[2] + up, *grasp[3:]]
+        self._approach = [*grasp[:2], grasp[2] + up, *grasp[3:]]
+        self._above = [*grasp[:2], grasp[2] + up + self.args.lift_extra, *grasp[3:]]
         self._product = target['product']
         self.grip('gripper_open', 0, lambda p: p <= OPEN_MAX)
-        self.l('approach', self._above)
+        self.l('approach', self._approach)
         self.l('descend', grasp, self.args.dvel)
 
     def grip_object(self):
@@ -275,7 +315,8 @@ class Cycle:
 
     def retract(self):
         self.l('lift', self._above)
-        self.l('home_after_lift', self.poses['poses']['home']['posx'])
+        home = self.poses['poses']['home']['posx']
+        self.l('home_carry', [home[0], home[1], home[2] + self.args.lift_extra, *home[3:]])
 
     def place(self, box_id=1):
         P, up = self.poses['poses'], self.poses['motion']['approach_offset_z']
@@ -284,12 +325,13 @@ class Cycle:
             self.log('box_fallback', requested=box_id, used_slot=1, reason='slot not taught')
             slot = 1
         slot_pose = self.poses['box_slots'][slot]['posx']
-        self.j('via_point', P['via_point']['posj'])
-        self.j('box_high', [P['home']['posj'][0] + 180.0, *P['home']['posj'][1:]])
-        self.l('box_place', list(slot_pose), self.args.dvel)
+        self.j('via_carry', self.carry['via_point'])
+        self.j('box_carry', self.carry['box_high'])
+        self.l('box_place', [*slot_pose[:2], slot_pose[2] + self.args.place_extra, *slot_pose[3:]], self.args.dvel)
         self.grip('release', 0, lambda p: p <= OPEN_MAX)
-        self.l('box_retreat', [*slot_pose[:2], slot_pose[2] + up * 4 / 3, *slot_pose[3:]])
-        self.j('via_return', P['via_point']['posj'])
+        carry_z = P['home']['posx'][2] + self.args.lift_extra
+        self.l('box_retreat', [*slot_pose[:2], carry_z, *slot_pose[3:]])
+        self.j('via_return', self.carry['via_point'])
         self.last_slot = slot
 
     def home(self):
@@ -345,6 +387,10 @@ def main(argv=None):
     parser.add_argument('--lvel', type=float, default=30.0, help='mm/s for transfer moves')
     parser.add_argument('--dvel', type=float, default=15.0, help='mm/s for descents')
     parser.add_argument('--log', type=Path)
+    parser.add_argument('--lift-extra', type=float, default=100.0,
+                        help='mm added to the lift and carry height (home/via/box transfer)')
+    parser.add_argument('--place-extra', type=float, default=100.0,
+                        help='mm above the taught box slot z where the object is released')
     parser.add_argument('--require-object', action='store_true', help='fail when the gripper closes empty')
     parser.add_argument('--api', help='run the repo RFID Orchestrator against this web API, e.g. http://127.0.0.1:8000')
     args = parser.parse_args(argv)

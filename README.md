@@ -203,6 +203,8 @@ python scripts/endurance_test.py --mode real --confirm-real  # 실물, Ctrl+C까
   플랜지로 변환하고, 바닥 하한 검사는 손끝 z로 수행한다. 펜던트에서 TCP를 켜면 차이가 0이 되어 보정도 0이 된다.
   `vision_picking/controller.py`의 기존 피킹 경로는 이 보정이 없으므로 **TCP를 켜지 않고 실물 실행하면 120 mm 낮게 내려간다.**
 - 시작 시 손끝이 home 높이보다 낮으면 수직으로 먼저 상승한 뒤 관절 이동한다.
+- 파지 후 들기·이동 높이는 `--lift-extra`(기본 100 mm: 들기 370, 이동 385), 박스 놓기 높이는 `--place-extra`
+  (기본 100 mm: 슬롯 z 85 → 185)로 높인다. 높인 home/경유점/박스 상부 관절값은 시작 시 ikin(같은 해 공간)으로 계산하고 fkin으로 검증한다.
 - **네트워크:** USB 랜 어댑터(r8152)를 USB 허브에 연결하면 `Tx status -71`로 리셋되어 DRFL 연결이 끊기고 SAFE_OFF가 된다.
   노트북 포트에 직접 연결한다.
 

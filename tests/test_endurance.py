@@ -52,4 +52,7 @@ def test_project_cycle_mock_applies_tcp_offset(tmp_path):
     assert next(r for r in records if r['event'] == 'tcp_offset')['applied_offset'] == 120.0
     descend = next(r for r in records if r.get('name') == 'descend')
     assert descend['tcp'][2] == 120.0
+    steps = {r['name']: r for r in records if r['event'] == 'step'}
+    assert steps['lift']['tcp'][2] == 370.0 and steps['home_carry']['tcp'][2] == 385.0
+    assert steps['box_place']['tcp'][2] == 185.0 and steps['box_retreat']['tcp'][2] == 385.0
     assert [r['event'] for r in records].count('cycle_ok') == 1
