@@ -15,7 +15,7 @@
 
 - Windows 10/11 PC, 로봇 PC와 **같은 네트워크**(같은 Wi-Fi 또는 같은 공유기)
 - Python 3.10 이상 — https://www.python.org/downloads/ 설치 시 **"Add python.exe to PATH" 체크**
-- Git — https://git-scm.com/download/win
+- Git — https://git-scm.com/download/win (없으면 아래 ZIP 다운로드로 대신 가능)
 - ACR1555U 리더기 (충전된 상태)
 
 ## 1. ACS 블루투스 드라이버 설치 (최초 1회)
@@ -39,6 +39,11 @@ windows_rfid_bridge\1_setup.bat
 
 `.venv-win` 가상환경에 `pyscard`, `httpx`만 설치한다(로봇 제어용 패키지는 설치하지 않는다).
 이미 클론했다면 `git pull` 후 같은 배치 파일을 다시 실행한다.
+
+**Git 없이 받기:** https://github.com/vision-picking-robot/robotArm_Controller_demo 에서
+**Code → Download ZIP**으로 받아 압축을 풀고(예: 바탕화면 `robotArm_Controller_demo-main`),
+그 폴더의 `windows_rfid_bridge\1_setup.bat`을 더블클릭한다. 이후 모든 배치 파일도 더블클릭으로 실행된다.
+업데이트는 ZIP을 다시 받아 덮어쓴다(`windows_rfid_bridge\api_url.txt`와 `.venv-win`은 남겨도 된다).
 
 ## 3. 로봇 PC 쪽 준비 (로봇 PC에서)
 
